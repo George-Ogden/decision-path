@@ -77,7 +77,7 @@ def _crop(image, offset_height, offset_width, crop_height, crop_width):
           tf.greater_equal(original_shape[1], crop_width)),
       ['Crop size greater than the image size.'])
 
-  offsets = tf.to_int32(tf.stack([offset_height, offset_width, 0]))
+  offsets = tf.compat.v1.to_int32(tf.stack([offset_height, offset_width, 0]))
 
   # Use tf.slice instead of crop_to_bounding box as it accepts tensors to
   # define the crop size.
@@ -245,15 +245,15 @@ def _smallest_size_at_least(height, width, smallest_side):
   """
   smallest_side = tf.convert_to_tensor(smallest_side, dtype=tf.int32)
 
-  height = tf.to_float(height)
-  width = tf.to_float(width)
-  smallest_side = tf.to_float(smallest_side)
+  height = tf.compat.v1.to_float(height)
+  width = tf.compat.v1.to_float(width)
+  smallest_side = tf.compat.v1.to_float(smallest_side)
 
   scale = tf.cond(tf.greater(height, width),
                   lambda: smallest_side / width,
                   lambda: smallest_side / height)
-  new_height = tf.to_int32(tf.rint(height * scale))
-  new_width = tf.to_int32(tf.rint(width * scale))
+  new_height = tf.compat.v1.to_int32(tf.math.rint(height * scale))
+  new_width = tf.compat.v1.to_int32(tf.math.rint(width * scale))
   return new_height, new_width
 
 
@@ -275,7 +275,7 @@ def _aspect_preserving_resize(image, smallest_side):
   width = shape[1]
   new_height, new_width = _smallest_size_at_least(height, width, smallest_side)
   image = tf.expand_dims(image, 0)
-  resized_image = tf.image.resize_bilinear(image, [new_height, new_width],
+  resized_image = tf.compat.v1.image.resize_bilinear(image, [new_height, new_width],
                                            align_corners=False)
   resized_image = tf.squeeze(resized_image)
   resized_image.set_shape([None, None, 3])
@@ -312,7 +312,7 @@ def preprocess_for_train(image,
   image = _aspect_preserving_resize(image, resize_side)
   image = _random_crop([image], output_height, output_width)[0]
   image.set_shape([output_height, output_width, 3])
-  image = tf.to_float(image)
+  image = tf.compat.v1.to_float(image)
   if use_grayscale:
     image = tf.image.rgb_to_grayscale(image)
   image = tf.image.random_flip_left_right(image)
@@ -339,7 +339,7 @@ def preprocess_for_eval(image,
   image = _aspect_preserving_resize(image, resize_side)
   image = _central_crop([image], output_height, output_width)[0]
   image.set_shape([output_height, output_width, 3])
-  image = tf.to_float(image)
+  image = tf.compat.v1.to_float(image)
   if use_grayscale:
     image = tf.image.rgb_to_grayscale(image)
   return _mean_image_subtraction(image, [_R_MEAN, _G_MEAN, _B_MEAN])

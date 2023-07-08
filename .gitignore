@@ -1,0 +1,15 @@
+# cached python files
+__pycache__/
+*.py[cod]
+
+# dataset files
+data/
+*.JPEG
+*.jpg
+*.png
+*.npy
+
+# compressed files
+*.zip
+*.rar
+*.gz

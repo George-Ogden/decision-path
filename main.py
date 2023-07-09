@@ -1,4 +1,4 @@
-from torchvision.models import ResNet, ResNet50_Weights, resnet50
+from torchvision.models import ResNet, ResNet50_Weights, resnet50, resnet101, ResNet101_Weights, ResNet152_Weights, resnet152
 import torch.utils.data as data
 import torch.nn as nn
 import torch
@@ -11,7 +11,7 @@ from glob import glob
 import os
 
 from classes import IMAGENET2012_CLASSES
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -25,23 +25,34 @@ class ResNetFeatureExtractor(nn.Module):
         super().__init__()
         for name, module in model.named_children():
             setattr(self, name, module)
+        self.layers = [self.layer1, self.layer2, self.layer3, self.layer4]
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, layers: Tuple[int, int]) -> torch.Tensor:
         # taken from https://github.com/pytorch/vision/blob/71968bc4afb8892284844a7c4cbd772696f42a88/torchvision/models/resnet.py#L266
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        for i, layer in enumerate(self.layers):
+            if i < layers[0]:
+                x = layer(x)
+            elif i == layers[0] and layers[1] > 0:
+                x = layer[:layers[1]](x)
+            else:
+                x = layer[0].downsample(x)
+            
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
+    
+    def update_layers(self, layers: Tuple[int, int]) -> Tuple[int, int]:
+        layers = (layers[0], layers[1] + 1)
+        if layers[1] >= len(self.layers[layers[0]]):
+            layers = (layers[0] + 1, 0)
+        return layers
 
 
 class ImageDataset(data.Dataset):
@@ -81,22 +92,27 @@ def main(args: argparse.Namespace):
             "label": torch.tensor([image["label"] for image in batch]),
         },
     )
-    top_1 = 0.0
-    top_5 = 0.0
-    for batch in tqdm(dataloader):
-        inputs = torch.stack(
-            [transforms(image.convert("RGB")) for image in batch["image"]]
-        )
+    layers = (0, 0)
+    while True:
+        top_1 = 0.0
+        top_5 = 0.0
+        for batch in tqdm(dataloader):
+            inputs = torch.stack(
+                [transforms(image.convert("RGB")) for image in batch["image"]]
+            )
 
-        with torch.no_grad():
-            predictions = model(inputs.cuda())
-            predictions = torch.topk(predictions, k=5, dim=1)[1].cpu()
-            top_1 += (predictions[:, 0] == batch["label"]).sum().item()
-            top_5 += (predictions == batch["label"].unsqueeze(-1)).sum().item()
-    top_1 /= len(dataset)
-    top_5 /= len(dataset)
-    print(f"Top-1 Accuracy: {top_1}")
-    print(f"Top-5 Accuracy: {top_5}")
+            with torch.no_grad():
+                predictions = model(inputs.cuda(), layers)
+                predictions = torch.topk(predictions, k=5, dim=1)[1].cpu()
+                top_1 += (predictions[:, 0] == batch["label"]).sum().item()
+                top_5 += (predictions == batch["label"].unsqueeze(-1)).sum().item()
+        top_1 /= len(dataset)
+        top_5 /= len(dataset)
+        print(f"{layers[0]+1}-{layers[1]+1} | {top_1*100:.4f}% | {top_5*100:.4f}%")
+        try:
+            layers = model.update_layers(layers)
+        except IndexError:
+            break
 
 
 if __name__ == "__main__":

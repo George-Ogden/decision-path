@@ -78,8 +78,8 @@ def main(args: argparse.Namespace):
 
     dataset = ImageDataset()
 
-    model = ResNetFeatureExtractor(resnet50(weights="DEFAULT")).cuda()
-    transforms = ResNet50_Weights.DEFAULT.transforms()
+    model = ResNetFeatureExtractor(resnet152(weights="DEFAULT")).cuda()
+    transforms = ResNet152_Weights.DEFAULT.transforms()
 
     dataloader = data.DataLoader(
         dataset,

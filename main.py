@@ -1,4 +1,4 @@
-from torchvision.models import ResNet, ResNet50_Weights, resnet50, resnet101, ResNet101_Weights, ResNet152_Weights, resnet152
+from torchvision.models import ResNet, ResNet50_Weights, resnet50, resnet101, ResNet101_Weights, ResNet152_Weights, resnet152, ResNet34_Weights, resnet34, ResNet18_Weights, resnet18
 import torch.utils.data as data
 import torch.nn as nn
 import torch
@@ -40,7 +40,7 @@ class ResNetFeatureExtractor(nn.Module):
             elif i == layers[0] and layers[1] > 0:
                 x = layer[:layers[1]](x)
             else:
-                x = layer[0].downsample(x)
+                x = (layer[0].downsample or nn.Identity())(x)
             
 
         x = self.avgpool(x)

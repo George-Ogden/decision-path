@@ -13,3 +13,9 @@ data/
 *.zip
 *.rar
 *.gz
+
+# model files
+mnli/
+*.bin
+*.json
+*.txt

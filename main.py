@@ -1,4 +1,9 @@
-from torchvision.models import ResNet, ResNet50_Weights, resnet50, resnet101, ResNet101_Weights, ResNet152_Weights, resnet152, ResNet34_Weights, resnet34, ResNet18_Weights, resnet18
+from torchvision.models import ResNet18_Weights, resnet18
+from torchvision.models import ResNet34_Weights, resnet34
+from torchvision.models import ResNet50_Weights, resnet50
+from torchvision.models import ResNet101_Weights, resnet101
+from torchvision.models import ResNet152_Weights, resnet152
+from torchvision.models import ResNet
 import torch.utils.data as data
 import torch.nn as nn
 import torch
@@ -17,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", "-b", type=int, default=16)
     parser.add_argument("--num_workers", "-j", type=int, default=4)
+    parser.add_argument("--model", "-m", type=int, default=50)
     return parser.parse_args()
 
 
@@ -54,6 +60,13 @@ class ResNetFeatureExtractor(nn.Module):
             layers = (layers[0] + 1, 0)
         return layers
 
+MODELS = {
+    18: (resnet18, ResNet18_Weights),
+    34: (resnet34, ResNet34_Weights),
+    50: (resnet50, ResNet50_Weights),
+    101: (resnet101, ResNet101_Weights),
+    152: (resnet152, ResNet152_Weights),
+}
 
 class ImageDataset(data.Dataset):
     label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
@@ -75,11 +88,15 @@ class ImageDataset(data.Dataset):
 def main(args: argparse.Namespace):
     batch_size = args.batch_size
     num_workers = args.num_workers
+    model_size = args.model
 
     dataset = ImageDataset()
 
-    model = ResNetFeatureExtractor(resnet152(weights="DEFAULT")).cuda()
-    transforms = ResNet152_Weights.DEFAULT.transforms()
+    model, weights = MODELS[model_size]
+    model = ResNetFeatureExtractor(
+        model(weights="DEFAULT")
+    ).cuda()
+    transforms = weights.DEFAULT.transforms()
 
     dataloader = data.DataLoader(
         dataset,

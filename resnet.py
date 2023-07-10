@@ -15,7 +15,7 @@ import argparse
 from glob import glob
 import os
 
-from classes import IMAGENET2012_CLASSES
+from imagenet_classes import IMAGENET2012_CLASSES
 from typing import Any, Dict, Tuple
 
 def parse_args() -> argparse.Namespace:

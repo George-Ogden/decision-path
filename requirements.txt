@@ -1,0 +1,9 @@
+datasets
+evaluate
+numpy
+scipy
+scikit - learn
+torch
+torchvision
+transformers[torch]
+tqdm

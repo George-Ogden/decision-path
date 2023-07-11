@@ -1,22 +1,11 @@
-from torchvision.models import ResNet18_Weights, resnet18
-from torchvision.models import ResNet34_Weights, resnet34
-from torchvision.models import ResNet50_Weights, resnet50
-from torchvision.models import ResNet101_Weights, resnet101
-from torchvision.models import ResNet152_Weights, resnet152
-from torchvision.models import ResNet
 import torch.utils.data as data
-import torch.nn as nn
 import torch
 
 from tqdm import tqdm
-from PIL import Image
 import argparse
 
-from glob import glob
-import os
-
-from imagenet_classes import IMAGENET2012_CLASSES
-from typing import Any, Dict, Tuple
+from model import MODELS, VariableLengthResNet
+from data import ImageDataset
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -24,65 +13,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num_workers", "-j", type=int, default=4)
     parser.add_argument("--model", "-m", type=int, default=50)
     return parser.parse_args()
-
-
-class ResNetFeatureExtractor(nn.Module):
-    def __init__(self, model: ResNet):
-        super().__init__()
-        for name, module in model.named_children():
-            setattr(self, name, module)
-        self.layers = [self.layer1, self.layer2, self.layer3, self.layer4]
-
-    def forward(self, x: torch.Tensor, layers: Tuple[int, int]) -> torch.Tensor:
-        # taken from https://github.com/pytorch/vision/blob/71968bc4afb8892284844a7c4cbd772696f42a88/torchvision/models/resnet.py#L266
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        for i, layer in enumerate(self.layers):
-            if i < layers[0]:
-                x = layer(x)
-            elif i == layers[0] and layers[1] > 0:
-                x = layer[:layers[1]](x)
-            else:
-                x = (layer[0].downsample or nn.Identity())(x)
-            
-
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-        return x
-    
-    def update_layers(self, layers: Tuple[int, int]) -> Tuple[int, int]:
-        layers = (layers[0], layers[1] + 1)
-        if layers[1] >= len(self.layers[layers[0]]):
-            layers = (layers[0] + 1, 0)
-        return layers
-
-MODELS = {
-    18: (resnet18, ResNet18_Weights),
-    34: (resnet34, ResNet34_Weights),
-    50: (resnet50, ResNet50_Weights),
-    101: (resnet101, ResNet101_Weights),
-    152: (resnet152, ResNet152_Weights),
-}
-
-class ImageDataset(data.Dataset):
-    label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
-    id2label = list(IMAGENET2012_CLASSES)
-
-    def __init__(self):
-        self.images = glob("data/*.JPEG")
-
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        filename = self.images[idx]
-        image = Image.open(filename)
-        cls = os.path.splitext(filename)[0].split("_")[-1]
-        return {"image": image, "label": self.label2id[cls]}
-
-    def __len__(self) -> int:
-        return len(self.images)
 
 
 def main(args: argparse.Namespace):
@@ -93,7 +23,7 @@ def main(args: argparse.Namespace):
     dataset = ImageDataset()
 
     model, weights = MODELS[model_size]
-    model = ResNetFeatureExtractor(
+    model = VariableLengthResNet(
         model(weights="DEFAULT")
     ).cuda()
     transforms = weights.DEFAULT.transforms()

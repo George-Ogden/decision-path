@@ -13,8 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import OrderedDict
 
+import torch.utils.data as data
+
+from collections import OrderedDict
+from PIL import Image
+
+from glob import glob
+import os
+
+from typing import Any, Dict
 
 IMAGENET2012_CLASSES = OrderedDict(
     {
@@ -1020,3 +1028,20 @@ IMAGENET2012_CLASSES = OrderedDict(
         "n15075141": "toilet tissue, toilet paper, bathroom tissue",
     }
 )
+
+class ImageDataset(data.Dataset):
+    label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
+    id2label = list(IMAGENET2012_CLASSES)
+
+    def __init__(self):
+        self.images = glob("data/*.JPEG")
+
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
+        filename = self.images[idx]
+        image = Image.open(filename)
+        cls = os.path.splitext(filename)[0].split("_")[-1]
+        return {"image": image, "label": self.label2id[cls]}
+
+    def __len__(self) -> int:
+        return len(self.images)
+

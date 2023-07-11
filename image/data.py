@@ -1029,6 +1029,7 @@ IMAGENET2012_CLASSES = OrderedDict(
     }
 )
 
+
 class ImageDataset(data.Dataset):
     label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
     id2label = list(IMAGENET2012_CLASSES)
@@ -1044,4 +1045,3 @@ class ImageDataset(data.Dataset):
 
     def __len__(self) -> int:
         return len(self.images)
-

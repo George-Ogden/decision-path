@@ -9,12 +9,17 @@ import torch
 
 from typing import Tuple
 
+
 class VariableLengthResNet(nn.Module):
     def __init__(self, model: ResNet):
         super().__init__()
         for name, module in model.named_children():
             setattr(self, name, module)
-        self.layers = [getattr(self, name) for name in model._modules.keys() if name.startswith("layer")]
+        self.layers = [
+            getattr(self, name)
+            for name in model._modules.keys()
+            if name.startswith("layer")
+        ]
 
     def forward(self, x: torch.Tensor, layers: Tuple[int, int]) -> torch.Tensor:
         # taken from https://github.com/pytorch/vision/blob/71968bc4afb8892284844a7c4cbd772696f42a88/torchvision/models/resnet.py#L266
@@ -27,21 +32,21 @@ class VariableLengthResNet(nn.Module):
             if i < layers[0]:
                 x = layer(x)
             elif i == layers[0] and layers[1] > 0:
-                x = layer[:layers[1]](x)
+                x = layer[: layers[1]](x)
             else:
                 x = (layer[0].downsample or nn.Identity())(x)
-            
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
-    
+
     def update_layers(self, layers: Tuple[int, int]) -> Tuple[int, int]:
         layers = (layers[0], layers[1] + 1)
         if layers[1] >= len(self.layers[layers[0]]):
             layers = (layers[0] + 1, 0)
         return layers
+
 
 MODELS = {
     18: (resnet18, ResNet18_Weights),

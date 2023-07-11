@@ -7,6 +7,7 @@ import argparse
 from model import MODELS, VariableLengthResNet
 from data import ImageDataset
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", "-b", type=int, default=16)
@@ -23,9 +24,7 @@ def main(args: argparse.Namespace):
     dataset = ImageDataset()
 
     model, weights = MODELS[model_size]
-    model = VariableLengthResNet(
-        model(weights="DEFAULT")
-    ).cuda()
+    model = VariableLengthResNet(model(weights="DEFAULT")).cuda()
     transforms = weights.DEFAULT.transforms()
 
     dataloader = data.DataLoader(

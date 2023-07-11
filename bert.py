@@ -1,15 +1,32 @@
-from transformers import default_data_collator, AutoTokenizer, BertForSequenceClassification, EvalPrediction, Trainer
+from transformers import (
+    default_data_collator,
+    AutoTokenizer,
+    BertForSequenceClassification,
+    EvalPrediction,
+    Trainer,
+)
 from datasets import load_dataset
 import evaluate
+
 import numpy as np
+import functools
+import argparse
+
 
 class ReducedLengthBert(BertForSequenceClassification):
-    def post_init(self):
-        super().post_init()
-        self.bert.encoder.layer = self.bert.encoder.layer[:11]
+    def reduce_layers(self, layers: int):
+        self.bert.encoder.layer = self.bert.encoder.layer[:layers]
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_name", "-m", type=str, required=True)
+    parser.add_argument("--layers", "-l", type=int)
+    return parser.parse_args()
+
+
 metric = evaluate.load("glue", "mnli")
+
 
 def compute_metrics(p: EvalPrediction):
     preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
@@ -19,14 +36,27 @@ def compute_metrics(p: EvalPrediction):
         result["combined_score"] = np.mean(list(result.values())).item()
     return result
 
-def preprocess_function(examples):
+
+def preprocess_function(tokenizer, examples):
     # Tokenize the texts
     sentence1_key, sentence2_key = "premise", "hypothesis"
     max_seq_length = 128
-    return tokenizer(examples[sentence1_key], examples[sentence2_key], padding="max_length", max_length=max_seq_length, truncation=True)
+    return tokenizer(
+        examples[sentence1_key],
+        examples[sentence2_key],
+        padding="max_length",
+        max_length=max_seq_length,
+        truncation=True,
+    )
 
-def main():
-    model = ReducedLengthBert.from_pretrained("mnli")
+
+def main(args: argparse.Namespace):
+    model_name = args.model_name
+    layers = args.layers
+
+    model = ReducedLengthBert.from_pretrained(model_name)
+    model.reduce_layers(layers)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     trainer = Trainer(
         model=model,
         eval_dataset="mnli",
@@ -38,9 +68,13 @@ def main():
     raw_datasets = load_dataset(
         "glue",
         "mnli",
-    ).map(preprocess_function, batched=True)
+    ).map(functools.partial(preprocess_function, tokenizer), batched=True)
+
     tasks = ["mnli", "mnli-mm"]
-    eval_datasets = [raw_datasets["validation_matched"], raw_datasets["validation_mismatched"]]
+    eval_datasets = [
+        raw_datasets["validation_matched"],
+        raw_datasets["validation_mismatched"],
+    ]
     combined = {}
 
     for eval_dataset, task in zip(eval_datasets, tasks):
@@ -52,8 +86,11 @@ def main():
         combined.update(metrics)
 
         trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", combined if task is not None and "mnli" in task else metrics)
+        trainer.save_metrics(
+            "eval", combined if task is not None and "mnli" in task else metrics
+        )
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args)

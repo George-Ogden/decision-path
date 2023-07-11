@@ -16,12 +16,15 @@ import argparse
 class ReducedLengthBert(BertForSequenceClassification):
     def reduce_layers(self, layers: int):
         self.bert.encoder.layer = self.bert.encoder.layer[:layers]
+    
+    @property
+    def num_layers(self):
+        return len(self.bert.encoder.layer)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", "-m", type=str, required=True)
-    parser.add_argument("--layers", "-l", type=int)
+    parser.add_argument("--model_name", "-m", type=str, default="bert-base-uncased")
     return parser.parse_args()
 
 
@@ -52,10 +55,8 @@ def preprocess_function(tokenizer, examples):
 
 def main(args: argparse.Namespace):
     model_name = args.model_name
-    layers = args.layers
 
     model = ReducedLengthBert.from_pretrained(model_name)
-    model.reduce_layers(layers)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     trainer = Trainer(
         model=model,
@@ -77,18 +78,17 @@ def main(args: argparse.Namespace):
     ]
     combined = {}
 
-    for eval_dataset, task in zip(eval_datasets, tasks):
-        metrics = trainer.evaluate(eval_dataset=eval_dataset)
-        metrics["eval_samples"] = len(eval_dataset)
+    for layers in reversed(range(model.num_layers + 1)):
+        model.reduce_layers(layers)
+        for eval_dataset, task in zip(eval_datasets, tasks):
+            metrics = trainer.evaluate(eval_dataset=eval_dataset)
+            metrics["eval_samples"] = len(eval_dataset)
 
-        if task == "mnli-mm":
-            metrics = {k + "_mm": v for k, v in metrics.items()}
-        combined.update(metrics)
+            if task == "mnli-mm":
+                metrics = {k + "_mm": v for k, v in metrics.items()}
+            combined.update(metrics)
 
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics(
-            "eval", combined if task is not None and "mnli" in task else metrics
-        )
+            trainer.log_metrics(f"eval-{layers}", metrics)
 
 
 if __name__ == "__main__":

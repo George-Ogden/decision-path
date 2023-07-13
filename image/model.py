@@ -20,6 +20,13 @@ class VariableLengthResNet(nn.Module):
             for name in model._modules.keys()
             if name.startswith("layer")
         ]
+        # turn off gradient for all layers
+        for layer in self.layers:
+            for param in layer.parameters():
+                param.requires_grad = False
+            if layer.downsample is not None:
+                for param in layer.downsample.parameters():
+                    param.requires_grad = True
 
     def forward(self, x: torch.Tensor, layers: Tuple[int, int]) -> torch.Tensor:
         # taken from https://github.com/pytorch/vision/blob/71968bc4afb8892284844a7c4cbd772696f42a88/torchvision/models/resnet.py#L266
@@ -42,9 +49,13 @@ class VariableLengthResNet(nn.Module):
         return x
 
     def update_layers(self, layers: Tuple[int, int]) -> Tuple[int, int]:
+        """increase the layer index by 1, if the layer index is out of bound, increase the layer group index by 1
+        meanwhile, restore gradients onto active layers"""
         layers = (layers[0], layers[1] + 1)
         if layers[1] >= len(self.layers[layers[0]]):
             layers = (layers[0] + 1, 0)
+        for param in self.layers[layers[0]].parameters():
+            param.requires_grad = True
         return layers
 
 

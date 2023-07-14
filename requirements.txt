@@ -2,7 +2,7 @@ datasets
 evaluate
 numpy
 scipy
-scikit - learn
+scikit-learn
 torch
 torchvision
 transformers[torch]

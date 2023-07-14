@@ -7,7 +7,7 @@ from torchvision.models import ResNet
 import torch.nn as nn
 import torch
 
-from typing import Tuple
+from typing import Sequence
 
 
 class VariableLengthResNet(nn.Module):
@@ -24,11 +24,12 @@ class VariableLengthResNet(nn.Module):
         for layer in self.layers:
             for param in layer.parameters():
                 param.requires_grad = False
-            if layer.downsample is not None:
+            if hasattr(layer, "downsample") and layer.downsample is not None:
                 for param in layer.downsample.parameters():
                     param.requires_grad = True
+        self.included_layers = (0, 0)
 
-    def forward(self, x: torch.Tensor, layers: Tuple[int, int]) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # taken from https://github.com/pytorch/vision/blob/71968bc4afb8892284844a7c4cbd772696f42a88/torchvision/models/resnet.py#L266
         x = self.conv1(x)
         x = self.bn1(x)
@@ -36,10 +37,10 @@ class VariableLengthResNet(nn.Module):
         x = self.maxpool(x)
 
         for i, layer in enumerate(self.layers):
-            if i < layers[0]:
+            if i < self.included_layers[0]:
                 x = layer(x)
-            elif i == layers[0] and layers[1] > 0:
-                x = layer[: layers[1]](x)
+            elif i == self.included_layers[0] and self.included_layers[1] > 0:
+                x = layer[: self.included_layers[1]](x)
             else:
                 x = (layer[0].downsample or nn.Identity())(x)
 
@@ -48,15 +49,21 @@ class VariableLengthResNet(nn.Module):
         x = self.fc(x)
         return x
 
-    def update_layers(self, layers: Tuple[int, int]) -> Tuple[int, int]:
+    def step_layers(self) -> Sequence[nn.Parameter]:
         """increase the layer index by 1, if the layer index is out of bound, increase the layer group index by 1
         meanwhile, restore gradients onto active layers"""
-        layers = (layers[0], layers[1] + 1)
-        if layers[1] >= len(self.layers[layers[0]]):
-            layers = (layers[0] + 1, 0)
-        for param in self.layers[layers[0]].parameters():
-            param.requires_grad = True
-        return layers
+        try:
+            layers = self.included_layers
+            layers = (layers[0], layers[1] + 1)
+            if layers[1] >= len(self.layers[layers[0]]):
+                layers = (layers[0] + 1, 0)
+            self.included_layers = layers
+
+            for param in self.layers[layers[0]][layers[1]].parameters():
+                param.requires_grad = True
+                yield param
+        except IndexError:
+            yield from []
 
 
 MODELS = {

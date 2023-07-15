@@ -19,3 +19,4 @@ mnli/
 *.bin
 *.json
 *.txt
+*.pth

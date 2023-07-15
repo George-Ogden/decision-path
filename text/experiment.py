@@ -9,7 +9,7 @@ import functools
 import argparse
 
 from utils import compute_metrics, preprocess_function
-from models import ReducedLengthBert
+from models import ReducedLengthBert, ReducedLengthRoberta
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,7 +21,12 @@ def parse_args() -> argparse.Namespace:
 def main(args: argparse.Namespace):
     model_name = args.model_name
 
-    model = ReducedLengthBert.from_pretrained(model_name)
+    if model_name.startswith("bert"):
+        model = ReducedLengthBert.from_pretrained(model_name)
+    elif model_name.startswith("roberta"):
+        model = ReducedLengthRoberta.from_pretrained(model_name)
+    else:
+        raise ValueError(f"Unknown model {model_name}")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     trainer = Trainer(
         model=model,

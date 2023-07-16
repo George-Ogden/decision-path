@@ -1,5 +1,6 @@
 from transformers import (
     default_data_collator,
+    AutoModelForSequenceClassification,
     AutoTokenizer,
     Trainer,
 )
@@ -13,8 +14,6 @@ import torch
 import json
 
 from utils import compute_metrics, preprocess_function
-from models import ReducedLengthBert
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -27,7 +26,7 @@ def main(args: argparse.Namespace):
     model_name = args.model_name
     threshold = args.activation_threshold
 
-    model = ReducedLengthBert.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     trainer = Trainer(
         model=model,

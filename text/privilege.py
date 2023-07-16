@@ -19,11 +19,13 @@ from models import ReducedLengthBert
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", "-m", type=str, default="bert-base-uncased")
+    parser.add_argument("--activation_threshold", "-t", type=float, default=6.)
     return parser.parse_args()
 
 
 def main(args: argparse.Namespace):
     model_name = args.model_name
+    threshold = args.activation_threshold
 
     model = ReducedLengthBert.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -63,7 +65,7 @@ def main(args: argparse.Namespace):
                 # L x [B, N, H]
                 hidden_states = torch.stack(outputs.hidden_states, axis=1)
                 # [B, L, N, H]
-                activations = (hidden_states > 6).float().mean(dim=(2, 3))
+                activations = (hidden_states > threshold).float().mean(dim=(2, 3))
                 # [B, L]
                 outliers += activations.sum(dim=0).cpu().numpy()
         

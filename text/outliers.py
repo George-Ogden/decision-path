@@ -49,28 +49,30 @@ def main(args: argparse.Namespace):
     combined = {}
 
     for eval_dataset, task in zip(eval_datasets, tasks):
-        outliers = 0
+        outliers = 0.
+        total = 0
 
         dataloader = trainer.get_eval_dataloader(eval_dataset)
         wrapped_model = trainer._wrap_model(trainer.model, training=False, dataloader=dataloader)
         wrapped_model.eval()
 
         for batch in tqdm(dataloader):
+            total += find_batch_size(batch)
             inputs = trainer._prepare_inputs(batch)
             with torch.no_grad():
                 outputs = wrapped_model(**inputs, output_hidden_states=True)
                 # L x [B, N, H]
                 hidden_states = torch.stack(outputs.hidden_states, axis=1)
                 # [B, L, N, H]
-                activations = (hidden_states > threshold).any(dim=0).any(dim=2)
-                # [L, H]
-                outliers |= activations.cpu().numpy()
+                activations = (hidden_states > threshold).float().mean(dim=2)
+                # [B, L, H]
+                outliers += activations.sum(dim=0).cpu().numpy()
         
         # convert to list for json serialization
-        combined[task] = outliers.sum(axis=1).tolist()
+        combined[task] = (outliers / total).tolist()
 
-    with open(f"results_{model_name}.json", "w") as f:
-        json.dump(combined, f)
+        with open(f"results_{model_name}.json", "w") as f:
+            json.dump(combined, f)
 
 if __name__ == "__main__":
     args = parse_args()

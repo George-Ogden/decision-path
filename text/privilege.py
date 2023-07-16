@@ -68,9 +68,10 @@ def main(args: argparse.Namespace):
                 outliers += activations.sum(dim=0).cpu().numpy()
         
         # convert to list for json serialization
-        combined[task] = list(outliers / total)
+        combined[task] = (outliers / total).tolist()
 
-    print(combined)
+    with open(f"results_{model_name}.json", "w") as f:
+        json.dump(combined, f)
 
 if __name__ == "__main__":
     args = parse_args()

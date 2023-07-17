@@ -20,7 +20,7 @@ from utils import compute_metrics, preprocess_function
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", "-m", type=str, default="bert-base-uncased")
-    parser.add_argument("--activation_threshold", "-t", type=float, default=6.)
+    parser.add_argument("--activation_threshold", "-t", type=float, default=4.)
     parser.add_argument("--output-dir", "-o", type=str, default="results", help="Output directory for results")
     return parser.parse_args()
 

@@ -9,8 +9,8 @@ from datasets import load_dataset
 import torch
 import scipy
 
+from collections import defaultdict
 from tqdm import tqdm
-import defaultdict
 import functools
 import argparse
 import json
@@ -92,7 +92,8 @@ def main(args: argparse.Namespace):
                 # [B, L, H]
                 rotated_kurtosis = rotated_kurtosis.mean(axis=2)
                 rotated_kurtoses += rotated_kurtosis.sum(0)
-        
+            break
+
         # convert to list for json serialization
         combined["outliers"][task] = (outliers / total).tolist()
         combined["kurtoses"][task] = (kurtoses / total).tolist()

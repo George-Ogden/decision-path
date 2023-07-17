@@ -12,6 +12,7 @@ import functools
 import argparse
 import torch
 import json
+import os
 
 from utils import compute_metrics, preprocess_function
 
@@ -19,12 +20,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", "-m", type=str, default="bert-base-uncased")
     parser.add_argument("--activation_threshold", "-t", type=float, default=6.)
+    parser.add_argument("--output-dir", "-o", type=str, default="results", help="Output directory for results")
     return parser.parse_args()
 
 
 def main(args: argparse.Namespace):
     model_name = args.model_name
     threshold = args.activation_threshold
+    output_dir = args.output_dir
 
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -71,7 +74,9 @@ def main(args: argparse.Namespace):
         # convert to list for json serialization
         combined[task] = (outliers / total).tolist()
 
-        with open(f"results_{model_name}.json", "w") as f:
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        with open(f"{output_dir}/{model_name}.json", "w") as f:
             json.dump(combined, f)
 
 if __name__ == "__main__":

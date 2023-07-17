@@ -9,7 +9,6 @@ from datasets import load_dataset
 import torch
 import scipy
 
-from collections import defaultdict
 from tqdm import tqdm
 import functools
 import argparse
@@ -51,7 +50,7 @@ def main(args: argparse.Namespace):
         raw_datasets["validation_matched"],
         raw_datasets["validation_mismatched"],
     ]
-    combined = defaultdict(dict)
+    combined = {}
 
     for eval_dataset, task in zip(eval_datasets, tasks):
         outliers = 0.
@@ -95,9 +94,11 @@ def main(args: argparse.Namespace):
             break
 
         # convert to list for json serialization
-        combined["outliers"][task] = (outliers / total).tolist()
-        combined["kurtoses"][task] = (kurtoses / total).tolist()
-        combined["rotated_kurtoses"][task] = (rotated_kurtoses / total).tolist()
+        combined[task] = {
+            "outliers": (outliers / total).tolist(),
+            "kurtosis": (kurtoses / total).tolist(),
+            "rotated_kurtosis": (rotated_kurtoses / total).tolist(),
+        }
 
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)

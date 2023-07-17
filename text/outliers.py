@@ -6,11 +6,13 @@ from transformers import (
 )
 from transformers.trainer_pt_utils import find_batch_size
 from datasets import load_dataset
+import torch
+import scipy
 
 from tqdm import tqdm
+import defaultdict
 import functools
 import argparse
-import torch
 import json
 import os
 
@@ -49,15 +51,18 @@ def main(args: argparse.Namespace):
         raw_datasets["validation_matched"],
         raw_datasets["validation_mismatched"],
     ]
-    combined = {}
+    combined = defaultdict(dict)
 
     for eval_dataset, task in zip(eval_datasets, tasks):
         outliers = 0.
+        kurtoses = 0.
+        rotated_kurtoses = 0.
         total = 0
 
         dataloader = trainer.get_eval_dataloader(eval_dataset)
         wrapped_model = trainer._wrap_model(trainer.model, training=False, dataloader=dataloader)
         wrapped_model.eval()
+        rotation_matrix = None
 
         for batch in tqdm(dataloader):
             total += find_batch_size(batch)
@@ -70,9 +75,28 @@ def main(args: argparse.Namespace):
                 activations = (hidden_states > threshold).float().mean(dim=2)
                 # [B, L, H]
                 outliers += activations.sum(dim=0).cpu().numpy()
+
+                kurtosis = scipy.stats.kurtosis(hidden_states.cpu().numpy(), axis=3, fisher=False)
+                kurtosis = kurtosis.mean(axis=2)
+                # [B, L, H]
+                kurtoses += kurtosis.sum(0)
+                
+                if rotation_matrix is None:
+                    random_matrix = torch.randn(hidden_states.shape[-1], hidden_states.shape[-1])
+                    rotation_matrix, _ = torch.linalg.qr(random_matrix)
+                    # [H, H]
+                    rotation_matrix = rotation_matrix.to(hidden_states.device)
+                hidden_states = hidden_states @ rotation_matrix
+                # [B, L, N, H]
+                rotated_kurtosis = scipy.stats.kurtosis(hidden_states.cpu().numpy(), axis=3, fisher=False)
+                # [B, L, H]
+                rotated_kurtosis = rotated_kurtosis.mean(axis=2)
+                rotated_kurtoses += rotated_kurtosis.sum(0)
         
         # convert to list for json serialization
-        combined[task] = (outliers / total).tolist()
+        combined["outliers"][task] = (outliers / total).tolist()
+        combined["kurtoses"][task] = (kurtoses / total).tolist()
+        combined["rotated_kurtoses"][task] = (rotated_kurtoses / total).tolist()
 
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)

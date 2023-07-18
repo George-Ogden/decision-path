@@ -91,7 +91,6 @@ def main(args: argparse.Namespace):
                 # [B, L, H]
                 rotated_kurtosis = rotated_kurtosis.mean(axis=2)
                 rotated_kurtoses += rotated_kurtosis.sum(0)
-            break
 
         # convert to list for json serialization
         combined[task] = {

@@ -55,6 +55,7 @@ def main(args: argparse.Namespace):
         raw_datasets["validation_mismatched"],
     ]
     combined = {}
+    model_name = model_name.split("/")[-1]
 
     for eval_dataset, task in zip(eval_datasets, tasks):
         outliers = 0.

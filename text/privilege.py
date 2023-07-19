@@ -6,6 +6,7 @@ from transformers import (
 )
 from transformers.trainer_pt_utils import find_batch_size
 from datasets import load_dataset
+import numpy as np
 import torch
 import scipy
 
@@ -39,6 +40,9 @@ def main(args: argparse.Namespace):
         compute_metrics=compute_metrics,
         data_collator=default_data_collator,
     )
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        model.config.pad_token_id = model.config.eos_token_id
 
     raw_datasets = load_dataset(
         "glue",
@@ -67,6 +71,8 @@ def main(args: argparse.Namespace):
             total += find_batch_size(batch)
             inputs = trainer._prepare_inputs(batch)
             with torch.no_grad():
+                # do not try computing loss (un-finetuned models will crash)
+                inputs["labels"] = None
                 outputs = wrapped_model(**inputs, output_hidden_states=True)
                 # L x [B, N, H]
                 hidden_states = torch.stack(outputs.hidden_states, axis=1)
@@ -105,5 +111,7 @@ def main(args: argparse.Namespace):
             json.dump(combined, f)
 
 if __name__ == "__main__":
+    np.random.seed(42)
+    torch.manual_seed(42)
     args = parse_args()
     main(args)

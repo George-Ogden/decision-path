@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer
+from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizer
 from transformers.modeling_outputs import ModelOutput, SequenceClassifierOutput
 from torchvision.models import ResNet
 
@@ -144,3 +144,29 @@ class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceCl
     @staticmethod
     def from_pretrained(model_name: str) -> ReducedLengthBertForSequenceClassification:
         return ReducedLengthBertForSequenceClassification(BertForSequenceClassification.from_pretrained(model_name), BertTokenizer.from_pretrained(model_name))
+
+class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenceClassification):
+    def __init__(self, model: RobertaForSequenceClassification, tokenizer: RobertaTokenizer) -> None:
+        super().__init__()
+        self._model = model
+        self._tokenizer = tokenizer
+    
+    @property
+    def tokenizer(self) -> RobertaTokenizer:
+        return self._tokenizer
+
+    @property
+    def model(self) -> RobertaForSequenceClassification:
+        return self._model
+    
+    @property
+    def torso(self) -> nn.Module:
+        return self.model.roberta.encoder.layer
+    
+    @property
+    def head(self) -> Optional[nn.Module]:
+        return self.model.classifier
+    
+    @staticmethod
+    def from_pretrained(model_name: str) -> ReducedLengthRobertaForSequenceClassification:
+        return ReducedLengthRobertaForSequenceClassification(RobertaForSequenceClassification.from_pretrained(model_name), RobertaTokenizer.from_pretrained(model_name))

@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from transformers import PreTrainedModel
+from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer
 from transformers.modeling_outputs import ModelOutput, SequenceClassifierOutput
 from torchvision.models import ResNet
 
@@ -32,6 +32,10 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
     @abc.abstractproperty
     def model(self) -> PreTrainedModel:
         ...
+    
+    @abc.abstractproperty
+    def tokenizer(self) -> PreTrainedTokenizer:
+        ...
 
     @abc.abstractproperty
     def torso(self) -> nn.Module:
@@ -42,6 +46,9 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
         ...
     
     def forward(self, *args: Any, **kwargs: Any) -> VariableLengthClassifierOutput:
+        kwargs |= {
+            "output_hidden_states": True,
+        }
         outputs: SequenceClassifierOutput = self.model(*args, **kwargs)
         predictions = None
         if self.head is not None:
@@ -111,3 +118,29 @@ class ReducedLengthModelForImageClassification(VariableLengthModelForClassificat
     @staticmethod
     def from_pretrained(model_name: str) -> ReducedLengthModelForImageClassification:
         ...
+
+class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceClassification):
+    def __init__(self, model: BertForSequenceClassification, tokenizer: BertTokenizer) -> None:
+        super().__init__()
+        self._model = model
+        self._tokenizer = tokenizer
+    
+    @property
+    def tokenizer(self) -> BertTokenizer:
+        return self._tokenizer
+
+    @property
+    def model(self) -> BertForSequenceClassification:
+        return self._model
+    
+    @property
+    def torso(self) -> nn.Module:
+        return self.model.bert.encoder.layer
+    
+    @property
+    def head(self) -> Optional[nn.Module]:
+        return self.model.classifier
+    
+    @staticmethod
+    def from_pretrained(model_name: str) -> ReducedLengthBertForSequenceClassification:
+        return ReducedLengthBertForSequenceClassification(BertForSequenceClassification.from_pretrained(model_name), BertTokenizer.from_pretrained(model_name))

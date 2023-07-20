@@ -3,9 +3,8 @@ from __future__ import annotations
 import abc
 from typing import Any, List, Optional, Tuple
 
-import torch
 import torch.nn as nn
-from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizer, GPT2ForSequenceClassification, GPT2Tokenizer
+from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizer, GPT2ForSequenceClassification, GPT2Tokenizer, AutoModelForSequenceClassification, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
@@ -46,6 +45,11 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
             (i, 0) for i in range(len(self.torso) + 1)
         ]
 
+    @classmethod
+    def _from_pretrained(cls, model_name: str) -> ReducedLengthModelForSequenceClassification:
+        return cls(AutoModelForSequenceClassification.from_pretrained(model_name), AutoTokenizer.from_pretrained(model_name))
+
+@VariableLengthModelForClassification.register("bert")
 class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: BertForSequenceClassification, tokenizer: BertTokenizer) -> None:
         super().__init__()
@@ -67,11 +71,8 @@ class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceCl
     @property
     def head(self) -> Optional[nn.Module]:
         return self.model.classifier
-    
-    @staticmethod
-    def from_pretrained(model_name: str) -> ReducedLengthBertForSequenceClassification:
-        return ReducedLengthBertForSequenceClassification(BertForSequenceClassification.from_pretrained(model_name), BertTokenizer.from_pretrained(model_name))
 
+@VariableLengthModelForClassification.register("roberta")
 class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: RobertaForSequenceClassification, tokenizer: RobertaTokenizer) -> None:
         super().__init__()
@@ -93,11 +94,8 @@ class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenc
     @property
     def head(self) -> Optional[nn.Module]:
         return self.model.classifier
-    
-    @staticmethod
-    def from_pretrained(model_name: str) -> ReducedLengthRobertaForSequenceClassification:
-        return ReducedLengthRobertaForSequenceClassification(RobertaForSequenceClassification.from_pretrained(model_name), RobertaTokenizer.from_pretrained(model_name))
 
+@VariableLengthModelForClassification.register("gpt2")
 class ReducedLengthGPT2ForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: GPT2ForSequenceClassification, tokenizer: GPT2Tokenizer) -> None:
         super().__init__()
@@ -119,7 +117,3 @@ class ReducedLengthGPT2ForSequenceClassification(ReducedLengthModelForSequenceCl
     @property
     def head(self) -> Optional[nn.Module]:
         return self.model.score
-    
-    @staticmethod
-    def from_pretrained(model_name: str) -> ReducedLengthGPT2ForSequenceClassification:
-        return ReducedLengthGPT2ForSequenceClassification(GPT2ForSequenceClassification.from_pretrained(model_name), GPT2Tokenizer.from_pretrained(model_name))

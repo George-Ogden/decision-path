@@ -7,11 +7,12 @@ from typing import Any, List, Optional, Tuple
 import torch
 import torch.nn as nn
 from transformers import PreTrainedModel
-from transformers.modeling_outputs import SequenceClassifierOutput
+from transformers.modeling_outputs import ModelOutput, SequenceClassifierOutput
 from torchvision.models import ResNet
 
 @dataclass
-class VariableLengthClassifierOutput(SequenceClassifierOutput):
+class VariableLengthClassifierOutput(ModelOutput):
+    layer_activations: Optional[List[torch.FloatTensor]] = None
     layer_predictions: Optional[torch.FloatTensor] = None
 
 class VariableLengthModelForClassification(abc.ABC, nn.Module):
@@ -46,7 +47,7 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
         if self.head is not None:
             predictions = [self.head(hidden_state) for hidden_state in outputs.hidden_states]
         return VariableLengthClassifierOutput(
-            **outputs,
+            layer_activations=outputs.hidden_states,
             layer_predictions=predictions,
         )
     
@@ -97,7 +98,7 @@ class ReducedLengthModelForImageClassification(VariableLengthModelForClassificat
         ]
 
         return VariableLengthClassifierOutput(
-            hidden_states=layer_outputs,
+            layer_activations=layer_outputs,
             layer_predictions=layer_predictions,
         )
     

@@ -10,13 +10,10 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
 
 class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassification):
-    @abc.abstractproperty
-    def model(self) -> PreTrainedModel:
-        ...
-    
-    @abc.abstractproperty
-    def tokenizer(self) -> PreTrainedTokenizer:
-        ...
+    def __init__(self, model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
+        super().__init__()
+        self.model = model
+        self.tokenizer = tokenizer
 
     @abc.abstractproperty
     def torso(self) -> nn.Module:
@@ -52,17 +49,7 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
 @VariableLengthModelForClassification.register("bert")
 class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: BertForSequenceClassification, tokenizer: BertTokenizer) -> None:
-        super().__init__()
-        self._model = model
-        self._tokenizer = tokenizer
-    
-    @property
-    def tokenizer(self) -> BertTokenizer:
-        return self._tokenizer
-
-    @property
-    def model(self) -> BertForSequenceClassification:
-        return self._model
+        super().__init__(model, tokenizer)   
     
     @property
     def torso(self) -> nn.Module:
@@ -75,17 +62,7 @@ class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceCl
 @VariableLengthModelForClassification.register("roberta")
 class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: RobertaForSequenceClassification, tokenizer: RobertaTokenizer) -> None:
-        super().__init__()
-        self._model = model
-        self._tokenizer = tokenizer
-    
-    @property
-    def tokenizer(self) -> RobertaTokenizer:
-        return self._tokenizer
-
-    @property
-    def model(self) -> RobertaForSequenceClassification:
-        return self._model
+        super().__init__(model, tokenizer)
     
     @property
     def torso(self) -> nn.Module:
@@ -98,17 +75,10 @@ class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenc
 @VariableLengthModelForClassification.register("gpt2")
 class ReducedLengthGPT2ForSequenceClassification(ReducedLengthModelForSequenceClassification):
     def __init__(self, model: GPT2ForSequenceClassification, tokenizer: GPT2Tokenizer) -> None:
-        super().__init__()
-        self._model = model
-        self._tokenizer = tokenizer
-    
-    @property
-    def tokenizer(self) -> GPT2Tokenizer:
-        return self._tokenizer
-
-    @property
-    def model(self) -> GPT2ForSequenceClassification:
-        return self._model
+        super().__init__(model, tokenizer)
+        if self.tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            model.config.pad_token_id = model.config.eos_token_id
 
     @property
     def torso(self) -> nn.Module:

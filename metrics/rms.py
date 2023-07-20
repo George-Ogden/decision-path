@@ -15,7 +15,10 @@ class RMS(Metric):
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
         self.total += np.sum(
-            (model_output.layer_activations ** 2).cpu().numpy().mean(axis=(-1, -2)),
+            [
+                (activations ** 2).cpu().numpy().mean(axis=(-1, -2))
+                for activations in model_output.layer_activations
+            ],
             axis=1
         )
         self.count += batch["batch_size"]

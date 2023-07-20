@@ -15,7 +15,10 @@ class Kurtosis(Metric):
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
         self.kurtosis += np.sum(
-            scipy.stats.kurtosis(model_output.layer_activations.cpu().numpy(), axis=-1, fisher=False).mean(axis=-1),
+            [
+                scipy.stats.kurtosis(activations.cpu().numpy(), axis=-1, fisher=False).mean(axis=-1)
+                for activations in model_output.layer_activations
+            ],
             axis=1
         )
         self.count += batch["batch_size"]

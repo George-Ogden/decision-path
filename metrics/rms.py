@@ -7,20 +7,16 @@ from .base import Metric, VariableLengthClassifierOutput
 
 @Metric.register("rms")
 class RMS(Metric):
-    def __init__(self):
-        self.total = 0.
-        self.count = 0
-
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
-        self.total += np.sum(
+        self.value += np.sum(
             [
                 (activations ** 2).cpu().numpy().mean(axis=(-1, -2))
                 for activations in model_output.layer_activations
             ],
             axis=1
         )
-        self.count += batch["batch_size"]
+        super().update(batch, model_output)
 
     def compute(self) -> float:
-        return np.sqrt(self.total / self.count)
+        return np.sqrt(self.value / self.count)

@@ -10,6 +10,10 @@ from ..models import VariableLengthClassifierOutput
 
 class Metric(abc.ABC):
     registry = {}
+    def __init__(self):
+        self.count = 0.
+        self.value = 0.
+        
     @abc.abstractmethod
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         """
@@ -17,15 +21,14 @@ class Metric(abc.ABC):
             batch (Dict[str, torch.Tensor]): batch from dataloader (including labels and batch_size)
             model_output (VariableLengthClassifierOutput): output of model
         """
-        ...
-    
-    @abc.abstractmethod
+        self.count += batch["batch_size"]
+
     def compute(self) -> List[float]:
         """
         Returns:
             List[float]: value calculated for each layer
         """
-        ...
+        return self.value / self.count
     
     @classmethod
     def register(cls, key: str) -> Callable[[Type[Metric]], Type[Metric]]:

@@ -8,23 +8,20 @@ from .base import Metric, VariableLengthClassifierOutput
 @Metric.register("topk")
 class Topk(Metric):
     def __init__(self, k: int):
-        self.correct = 0
-        self.count = 0
+        self.value = 0
         self.k = k
+        super().__init__()
 
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, C]
-        self.correct += np.sum(
+        self.value += np.sum(
             [
                 (torch.topk(prediction, k=self.k, dim=-1).indices == batch["labels"].unsqueeze(-1)).sum().item()
                 for prediction in model_output.predictions
             ],
             axis=1
         )
-        self.count += batch["batch_size"]
-
-    def compute(self) -> float:
-        return self.correct / self.count
+        super().update(batch, model_output)
 
 @Metric.register("top1")
 class Top1(Topk):

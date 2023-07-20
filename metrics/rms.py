@@ -6,19 +6,19 @@ from typing import Dict
 
 from .base import Metric, VariableLengthClassifierOutput
 
-@Metric.register("kurtosis")
-class Kurtosis(Metric):
+@Metric.register("rms")
+class RMS(Metric):
     def __init__(self):
-        self.kurtosis = 0.
+        self.total = 0.
         self.count = 0
 
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
-        self.kurtosis += np.sum(
-            scipy.stats.kurtosis(model_output.layer_activations.cpu().numpy(), axis=-1, fisher=False).mean(axis=-1),
+        self.total += np.sum(
+            (model_output.layer_activations ** 2).cpu().numpy().mean(axis=(-1, -2)),
             axis=1
         )
         self.count += batch["batch_size"]
 
     def compute(self) -> float:
-        return self.kurtosis / self.count
+        return np.sqrt(self.total / self.count)

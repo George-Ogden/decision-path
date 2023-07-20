@@ -1,17 +1,30 @@
 from __future__ import annotations
 
 import abc
-from typing import Callable, Type
+from typing import Callable, Dict, List, Type
+
+import torch
+
+from ..models import VariableLengthClassifierOutput
 
 
 class Metric(abc.ABC):
     registry = {}
     @abc.abstractmethod
-    def update(self, *args, **kwargs):
+    def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
+        """
+        Args:
+            batch (Dict[str, torch.Tensor]): batch from dataloader (including labels and batch_size)
+            model_output (VariableLengthClassifierOutput): output of model
+        """
         ...
     
     @abc.abstractmethod
-    def compute(self, *args, **kwargs):
+    def compute(self) -> List[float]:
+        """
+        Returns:
+            List[float]: value calculated for each layer
+        """
         ...
     
     @classmethod

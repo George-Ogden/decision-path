@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from transformers import PreTrainedModel
 from transformers.modeling_outputs import SequenceClassifierOutput
-
+from torchvision.models import ResNet
 
 @dataclass
 class VariableLengthClassifierOutput(SequenceClassifierOutput):
@@ -53,5 +53,5 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
     @property
     def layers(self) -> List[Tuple[int, int]]:
         return [
-            (0, i) for i in range(len(self.torso) + 1)
+            (i, 0) for i in range(len(self.torso) + 1)
         ]

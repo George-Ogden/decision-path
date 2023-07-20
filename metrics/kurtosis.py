@@ -25,3 +25,20 @@ class Kurtosis(Metric):
 
     def compute(self) -> float:
         return self.kurtosis / self.count
+
+@Metric.register("rotated_kurtosis")
+class RotatedKurtosis(Kurtosis):
+    def __init__(self):
+        super().__init__()
+        self.rotations = None
+
+    def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
+        # L x [B, N, H]
+        if self.rotations is None:
+            self.rotations = [
+                torch.linalg.qr(torch.randn(activations.shape[-1], activations.shape[-1]))[0].to(activations.device)
+                for activations in model_output.layer_activations
+            ]
+        for activation, rotation in zip(model_output.layer_activations, self.rotations):
+            activation @= rotation
+        super().update(batch, model_output)

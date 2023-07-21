@@ -21,9 +21,10 @@ def parse_args() -> argparse.Namespace:
 def main(args: argparse.Namespace):
     model_name = args.model_name
 
-    if model_name.startswith("bert"):
+    short_name = model_name.split("/")[-1]
+    if short_name.startswith("bert"):
         model = ReducedLengthBert.from_pretrained(model_name)
-    elif model_name.startswith("roberta"):
+    elif short_name.startswith("roberta"):
         model = ReducedLengthRoberta.from_pretrained(model_name)
     else:
         raise ValueError(f"Unknown model {model_name}")

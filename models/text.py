@@ -9,7 +9,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
 
-class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassification):
+class VariableLengthModelForSequenceClassification(VariableLengthModelForClassification):
     def __init__(self, model: AutoModelForSequenceClassification, tokenizer: AutoTokenizer):
         super().__init__()
         self.model = model
@@ -43,11 +43,11 @@ class ReducedLengthModelForSequenceClassification(VariableLengthModelForClassifi
         ]
 
     @classmethod
-    def _from_pretrained(cls, model_name: str) -> ReducedLengthModelForSequenceClassification:
+    def _from_pretrained(cls, model_name: str) -> VariableLengthModelForSequenceClassification:
         return cls(AutoModelForSequenceClassification.from_pretrained(model_name), AutoTokenizer.from_pretrained(model_name))
 
 @VariableLengthModelForClassification.register("bert")
-class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceClassification):
+class VariableLengthBertForSequenceClassification(VariableLengthModelForSequenceClassification):
     def __init__(self, model: BertForSequenceClassification, tokenizer: BertTokenizer) -> None:
         super().__init__(model, tokenizer)   
     
@@ -60,7 +60,7 @@ class ReducedLengthBertForSequenceClassification(ReducedLengthModelForSequenceCl
         return self.model.classifier
 
 @VariableLengthModelForClassification.register("roberta")
-class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenceClassification):
+class VariableLengthRobertaForSequenceClassification(VariableLengthModelForSequenceClassification):
     def __init__(self, model: RobertaForSequenceClassification, tokenizer: RobertaTokenizer) -> None:
         super().__init__(model, tokenizer)
     
@@ -73,7 +73,7 @@ class ReducedLengthRobertaForSequenceClassification(ReducedLengthModelForSequenc
         return self.model.classifier
 
 @VariableLengthModelForClassification.register("gpt2")
-class ReducedLengthGPT2ForSequenceClassification(ReducedLengthModelForSequenceClassification):
+class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequenceClassification):
     def __init__(self, model: GPT2ForSequenceClassification, tokenizer: GPT2Tokenizer) -> None:
         super().__init__(model, tokenizer)
         if self.tokenizer.pad_token is None:

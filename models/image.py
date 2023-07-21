@@ -14,7 +14,7 @@ from torchvision.models import ResNet
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
 
 @VariableLengthModelForClassification.register("resnet")
-class ReducedLengthResNetForImageClassification(VariableLengthModelForClassification):
+class VariableLengthResNetForImageClassification(VariableLengthModelForClassification):
     MODELS = {
         "resnet18": (resnet18, ResNet18_Weights),
         "resnet34": (resnet34, ResNet34_Weights),
@@ -73,7 +73,7 @@ class ReducedLengthResNetForImageClassification(VariableLengthModelForClassifica
         ]
     
     @classmethod
-    def _from_pretrained(cls, model_name: str) -> ReducedLengthResNetForImageClassification:
-        model, weights = ReducedLengthResNetForImageClassification.MODELS[model_name]
-        return cls(model(weights="DEFALT"))
+    def _from_pretrained(cls, model_name: str) -> VariableLengthResNetForImageClassification:
+        model, weights = VariableLengthResNetForImageClassification.MODELS[model_name]
+        return cls(model(weights="DEFAULT"))
     

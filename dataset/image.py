@@ -1033,6 +1033,10 @@ IMAGENET2012_CLASSES = OrderedDict(
 
 
 class ImageDataset(data.Dataset):
+    """ImageNet susbet (validation set)
+    download the val images from https://huggingface.co/datasets/imagenet-1k/blob/main/data/val_images.tar.gz
+    extract to data/ folder
+    """
     label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
     id2label = list(IMAGENET2012_CLASSES)
 

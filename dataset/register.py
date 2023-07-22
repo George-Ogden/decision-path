@@ -1,6 +1,6 @@
 from typing import Any
 
-datasets = {}
+DATASETS = {}
 
 def register(name: str, dataset: Any):
-    datasets[name] = dataset
+    DATASETS[name] = dataset

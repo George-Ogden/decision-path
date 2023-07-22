@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch.nn as nn
+import torch
+
 from transformers import PreTrainedModel, BertForSequenceClassification, BertTokenizer, PreTrainedTokenizer, RobertaForSequenceClassification, RobertaTokenizer, GPT2ForSequenceClassification, GPT2Tokenizer, AutoModelForSequenceClassification, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
@@ -47,6 +49,17 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
     @classmethod
     def _from_pretrained(cls, model_name: str) -> VariableLengthModelForSequenceClassification:
         return cls(AutoModelForSequenceClassification.from_pretrained(model_name), AutoTokenizer.from_pretrained(model_name))
+
+    def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        sentence1_key, sentence2_key = "premise", "hypothesis"
+        max_seq_length = 128
+        return self.tokenizer(
+            batch[sentence1_key],
+            batch[sentence2_key],
+            padding="max_length",
+            max_length=max_seq_length,
+            truncation=True,
+        )
 
 @VariableLengthModelForClassification.register("bert")
 class VariableLengthBertForSequenceClassification(VariableLengthModelForSequenceClassification):

@@ -35,3 +35,7 @@ class VariableLengthModelForClassification(abc.ABC, nn.Module, Registry):
             if key in model_name.lower():
                 return model_class._from_pretrained(model_name)
         raise ValueError(f"Model {model_name} not found in registry {cls.registry}.")
+
+    @abc.abstractmethod
+    def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        ...

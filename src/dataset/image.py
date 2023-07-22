@@ -1076,24 +1076,10 @@ class ImageNet1kDatasetBuilder(datasets.GeneratorBasedBuilder):
 
 @DatasetBuilder.register("imagenet")
 class ImageNetDatasetBuilder(DatasetBuilder):
-    CROP_SIZE = 256
-    IMAGE_SIZE = 224
     @classmethod
     def build(cls) -> datasets.Dataset:
         builder = ImageNet1kDatasetBuilder()
         builder.download_and_prepare()
         dataset = builder.as_dataset(split="validation")
-        dataset.map(cls.transform, batched=True)
         return dataset
-    
-    @classmethod
-    def transform(cls, batch: Dict[str, Any]) -> Dict[str, Any]:
-        transform = transforms.Compose([
-            transforms.Resize(cls.IMAGE_SIZE),
-            transforms.CenterCrop(cls.CROP_SIZE),
-            transforms.ToTensor(),
-        ])
-        batch["pixel_values"] = [
-            transform(image.convert("RGB")) for image in batch["image"]
-        ]
-        return batch
+   

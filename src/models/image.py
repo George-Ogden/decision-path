@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -10,6 +10,7 @@ from torchvision.models import ResNet50_Weights, resnet50
 from torchvision.models import ResNet101_Weights, resnet101
 from torchvision.models import ResNet152_Weights, resnet152
 from torchvision.models import ResNet
+from torchvision import transforms
 
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
 
@@ -22,7 +23,7 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
         "resnet101": (resnet101, ResNet101_Weights),
         "resnet152": (resnet152, ResNet152_Weights),
     }
-    def __init__(self, model: ResNet):
+    def __init__(self, model: ResNet, transform: transforms.Compose):
         super().__init__()
         self.feature_extractor = nn.Sequential(
             model.conv1,
@@ -30,16 +31,17 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
             model.relu,
             model.maxpool,
         )
-        self.torso: List[nn.Module] = [
+        self.torso = nn.ModuleList([
             getattr(model, name)
             for name in model._modules.keys()
             if name.startswith("layer")
-        ]
+        ])
         self.head = nn.Sequential(
             model.avgpool,
             nn.Flatten(1),
             model.fc,
         )
+        self.transform = transform
 
     def forward(self, pixel_values: torch.Tensor) -> VariableLengthClassifierOutput:
         x = pixel_values
@@ -77,5 +79,10 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
     @classmethod
     def _from_pretrained(cls, model_name: str) -> VariableLengthResNetForImageClassification:
         model, weights = VariableLengthResNetForImageClassification.MODELS[model_name]
-        return cls(model(weights="DEFAULT"))
+        return cls(model(weights="DEFAULT"), weights.DEFAULT.transforms())
     
+    def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        batch["pixel_values"] = [
+            self.transform(image.convert("RGB")) for image in batch["image"]
+        ]
+        return batch

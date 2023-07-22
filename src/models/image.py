@@ -41,8 +41,9 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
             model.fc,
         )
 
-    def forward(self, x: torch.Tensor = None, **kwargs) -> VariableLengthClassifierOutput:
-        print(kwargs.keys())
+    def forward(self, pixel_values: torch.Tensor) -> VariableLengthClassifierOutput:
+        x = pixel_values
+
         layer_outputs = []
         layer_predictions = []
         x = self.feature_extractor(x)

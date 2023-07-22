@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from typing import Dict, List
 import abc
-from typing import Callable, Dict, List, Type
 
 import torch
 
 from ..models import VariableLengthClassifierOutput
+from ..registry import Registry
 
-
-class Metric(abc.ABC):
-    registry = {}
+class Metric(abc.ABC, Registry):
+    registry: Dict[str, Metric] = {}
     def __init__(self):
         self.count = 0.
         self.value = 0.
@@ -29,10 +29,3 @@ class Metric(abc.ABC):
             List[float]: value calculated for each layer
         """
         return self.value / self.count
-    
-    @classmethod
-    def register(cls, key: str) -> Callable[[Type[Metric]], Type[Metric]]:
-        def decorator(model_class: Type[Metric]) -> Type[Metric]:
-            cls.registry[key] = model_class
-            return model_class
-        return decorator

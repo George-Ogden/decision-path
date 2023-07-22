@@ -33,6 +33,6 @@ class Metric(abc.ABC):
     @classmethod
     def register(cls, key: str) -> Callable[[Type[Metric]], Type[Metric]]:
         def decorator(model_class: Type[Metric]) -> Type[Metric]:
-            cls.registry.append((key, model_class))
+            cls.registry[key] = model_class
             return model_class
         return decorator

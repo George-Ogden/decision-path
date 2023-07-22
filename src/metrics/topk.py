@@ -23,6 +23,7 @@ class Topk(Metric):
         )
         super().update(batch, model_output)
 
+@Metric.register("accuracy")
 @Metric.register("top1")
 class Top1(Topk):
     def __init__(self):

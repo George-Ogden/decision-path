@@ -19,7 +19,7 @@ class Kurtosis(Metric):
         )
         super().update(batch, model_output)
 
-@Metric.register("rotated_kurtosis")
+@Metric.register("rotated-kurtosis")
 class RotatedKurtosis(Kurtosis):
     def __init__(self):
         super().__init__()

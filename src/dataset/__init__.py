@@ -1,5 +1,5 @@
-from typing import Any
+from .text import MNLIDatasetBuilder, MNLI_MMDatasetBuilder
+from .image import ImageNetDatasetBuilder
+from .base import DatasetBuilder
 
-from .register import DATASETS
-from .text import mnli, mnli_mm
-from .image import imagenet
+DATASET_BUILDERS = DatasetBuilder.registry

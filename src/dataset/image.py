@@ -13,19 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import torch.utils.data as data
+from datasets import ImageClassification
+from torchvision import transforms
+import datasets
 
 from collections import OrderedDict
-from PIL import Image
-
-from glob import glob
 import os
 
 from typing import Any, Dict
 
-from .register import register
+from .base import DatasetBuilder
 
+_DATA_URL = "https://huggingface.co/datasets/imagenet-1k/resolve/1500f8c59b214ce459c0a593fa1c87993aeb7700/data/val_images.tar.gz"
 IMAGENET2012_CLASSES = OrderedDict(
     {
         "n01440764": "tench, Tinca tinca",
@@ -1032,25 +1031,69 @@ IMAGENET2012_CLASSES = OrderedDict(
 )
 
 
-class ImageDataset(data.Dataset):
-    """ImageNet susbet (validation set)
-    download the val images from https://huggingface.co/datasets/imagenet-1k/blob/main/data/val_images.tar.gz
-    extract to data/ folder
-    """
-    label2id = {label: i for i, label in enumerate(IMAGENET2012_CLASSES)}
-    id2label = list(IMAGENET2012_CLASSES)
+class ImageNet1kDatasetBuilder(datasets.GeneratorBasedBuilder):
+    def _info(self):
+        assert len(IMAGENET2012_CLASSES) == 1000
+        return datasets.DatasetInfo(
+            features=datasets.Features(
+                {
+                    "image": datasets.Image(),
+                    "label": datasets.ClassLabel(names=list(IMAGENET2012_CLASSES.values())),
+                }
+            ),
+            task_templates=[ImageClassification(image_column="image", label_column="label")],
+        )
 
-    def __init__(self):
-        self.images = glob("data/*.JPEG")
+    def _split_generators(self, dl_manager):
+        """Returns SplitGenerators."""
+        archive = dl_manager.download(_DATA_URL)
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
-        filename = self.images[idx]
-        image = Image.open(filename)
-        cls = os.path.splitext(filename)[0].split("_")[-1]
-        return {"image": image, "label": self.label2id[cls]}
+        return [
+            datasets.SplitGenerator(
+                name=datasets.Split.VALIDATION,
+                gen_kwargs={
+                    "files": dl_manager.iter_archive(archive),
+                    "split": "validation",
+                },
+            ),
+        ]
 
-    def __len__(self) -> int:
-        return len(self.images)
+    def _generate_examples(self, files, split):
+        """Yields examples."""
+        idx = 0
+        for path, file in files:
+            if path.endswith(".JPEG"):
+                if split != "test":
+                    # image filepath format: <IMAGE_FILENAME>_<SYNSET_ID>.JPEG
+                    root, _ = os.path.splitext(path)
+                    _, synset_id = os.path.basename(root).rsplit("_", 1)
+                    label = IMAGENET2012_CLASSES[synset_id]
+                else:
+                    label = -1
+                ex = {"image": {"path": path, "bytes": file.read()}, "label": label}
+                yield idx, ex
+                idx += 1
 
-imagenet = ImageDataset()
-register("imagenet", imagenet)
+@DatasetBuilder.register("imagenet")
+class ImageNetDatasetBuilder(DatasetBuilder):
+    CROP_SIZE = 256
+    IMAGE_SIZE = 224
+    @classmethod
+    def build(cls) -> datasets.Dataset:
+        builder = ImageNet1kDatasetBuilder()
+        builder.download_and_prepare()
+        dataset = builder.as_dataset(split="validation")
+        dataset.map(cls.transform, batched=True)
+        return dataset
+    
+    @classmethod
+    def transform(cls, batch: Dict[str, Any]) -> Dict[str, Any]:
+        transform = transforms.Compose([
+            transforms.Resize(cls.IMAGE_SIZE),
+            transforms.CenterCrop(cls.CROP_SIZE),
+            transforms.ToTensor(),
+        ])
+        batch["pixel_values"] = [
+            transform(image.convert("RGB")) for image in batch["image"]
+        ]
+        return batch

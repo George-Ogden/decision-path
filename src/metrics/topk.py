@@ -14,13 +14,10 @@ class Topk(Metric):
 
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, C]
-        self.value += np.sum(
-            [
-                (torch.topk(prediction, k=self.k, dim=-1).indices == batch["labels"].unsqueeze(-1)).sum().item()
-                for prediction in model_output.predictions
-            ],
-            axis=1
-        )
+        self.value += np.array([
+            (torch.topk(prediction, k=self.k, dim=-1).indices == batch["labels"].unsqueeze(-1)).sum().item()
+            for prediction in model_output.layer_predictions
+        ])
         super().update(batch, model_output)
 
 @Metric.register("accuracy")

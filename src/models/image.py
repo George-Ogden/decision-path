@@ -58,7 +58,8 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
                 ]
             for sublayer in layer:
                 x = sublayer(x)
-                layer_outputs.append(x)
+                # convert to [B, N, H]
+                layer_outputs.append(x.mean(dim=(-1, -2)).unsqueeze(-2))
                 layer_predictions.append(x)
         layer_predictions = [
             self.head(x)

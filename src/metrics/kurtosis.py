@@ -10,13 +10,10 @@ from .base import Metric, VariableLengthClassifierOutput
 class Kurtosis(Metric):
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
-        self.value += np.sum(
-            [
-                scipy.stats.kurtosis(activations.cpu().numpy(), axis=-1, fisher=False).mean(axis=-1)
-                for activations in model_output.layer_activations
-            ],
-            axis=1
-        )
+        self.value += np.array([
+            scipy.stats.kurtosis(activations.cpu().numpy(), axis=-1, fisher=False).mean(axis=-1).sum()
+            for activations in model_output.layer_activations
+        ])
         super().update(batch, model_output)
 
 @Metric.register("rotated-kurtosis")

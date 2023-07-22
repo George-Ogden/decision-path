@@ -13,11 +13,8 @@ class Outliers(Metric):
 
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
-        self.value += np.sum(
-            [
-                (activations > self.threshold).float().cpu().numpy().mean(axis=(-1, -2))
+        self.value += np.array([
+                (activations > self.threshold).float().cpu().numpy().mean(axis=(-1, -2)).sum()
                 for activations in model_output.layer_activations
-            ],
-            axis=1
-        )
+        ])
         super().update(batch, model_output)

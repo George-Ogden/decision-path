@@ -14,13 +14,10 @@
 # limitations under the License.
 
 from datasets import ImageClassification
-from torchvision import transforms
 import datasets
 
 from collections import OrderedDict
 import os
-
-from typing import Any, Dict
 
 from .base import DatasetBuilder
 

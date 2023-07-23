@@ -9,12 +9,11 @@ from .base import Metric, VariableLengthClassifierOutput
 class RMS(Metric):
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
-        self.value += np.sum(
+        self.value += np.array(
             [
-                (activations ** 2).cpu().numpy().mean(axis=(-1, -2))
+                (activations ** 2).cpu().numpy().mean(axis=(-1, -2)).sum()
                 for activations in model_output.layer_activations
             ],
-            axis=1
         )
         super().update(batch, model_output)
 

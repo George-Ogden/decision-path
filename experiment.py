@@ -69,12 +69,12 @@ def main(args: argparse.Namespace):
                         inputs,
                         model_output
                     )
-                break
         
         results[dataset_name] = {
             name: metric.compute().tolist()
             for name, metric in metrics.items()
         }
+    results["layers"] = model.layers
 
     model_name = model_name.split("/")[-1]
     if not os.path.exists(output_dir):

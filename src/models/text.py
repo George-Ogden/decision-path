@@ -25,10 +25,9 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
     def head(self) -> Optional[nn.Module]:
         ...
     
-    def forward(self, input_ids: torch.Tensor, token_type_ids: torch.Tensor, attention_mask: torch.Tensor) -> VariableLengthClassifierOutput:
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> VariableLengthClassifierOutput:
         outputs: SequenceClassifierOutput = self.model(
             input_ids=input_ids,
-            token_type_ids=token_type_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
         )

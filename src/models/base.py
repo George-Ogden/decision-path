@@ -31,8 +31,9 @@ class VariableLengthModelForClassification(abc.ABC, nn.Module, Registry):
     
     @classmethod
     def from_pretrained(cls, model_name: str) -> VariableLengthModelForClassification:
+        short_model_name = model_name.split("/")[-1]
         for key, model_class in cls.registry.items():
-            if key in model_name.lower():
+            if short_model_name.lower().startswith(key):
                 return model_class._from_pretrained(model_name)
         raise ValueError(f"Model {model_name} not found in registry {cls.registry}.")
 

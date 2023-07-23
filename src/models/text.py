@@ -97,7 +97,21 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
     @property
     def torso(self) -> nn.Module:
         return self.model.transformer.h
-    
+   
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> VariableLengthClassifierOutput:
+        outputs: VariableLengthClassifierOutput = super().forward(input_ids=input_ids, attention_mask=attention_mask)
+        # compute predictions based on lengths
+        # modified from https://github.com/huggingface/transformers/blob/b257c46a075419c09e5ce5c5aa39bc346ecdb9a5/src/transformers/models/gpt2/modeling_gpt2.py#L1446
+        sequence_lengths = (torch.ne(input_ids, self.model.config.pad_token_id).sum(dim=-1) - 1)
+        hidden_states = torch.stack([
+            activations[torch.arange(activations.shape[0], device=activations.device), sequence_lengths.to(activations.device)]
+            for activations in outputs.layer_activations
+        ])
+        predictions = self.model.score(hidden_states)
+        return VariableLengthClassifierOutput(
+            layer_activations=outputs.layer_activations,
+            layer_predictions=predictions,
+        ) 
     @property
     def head(self) -> Optional[nn.Module]:
-        return self.model.score
+        return None

@@ -1,5 +1,5 @@
+from transformers import Trainer, TrainingArguments, default_data_collator
 from transformers.trainer_pt_utils import find_batch_size
-from transformers import Trainer, default_data_collator
 from tqdm import tqdm
 import torch
 
@@ -21,6 +21,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--datasets", "-d", nargs="+", type=str, default=["mnli", "mnli-mm"])
     parser.add_argument("--output-dir", "-o", type=str, default="results", help="Output directory for results")
     parser.add_argument("--threshold", "-t", type=float, default=6.)
+    parser.add_argument("--batch_size", "-b", type=int, default=128)
+    parser.add_argument("--num_workers", "-j", type=int, default=0)
     return parser.parse_args()
 
 def main(args: argparse.Namespace):
@@ -28,17 +30,22 @@ def main(args: argparse.Namespace):
     dataset_names = args.datasets
     metric_names = args.metrics
     output_dir = args.output_dir
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+  
     model = VariableLengthModelForClassification.from_pretrained(model_name).eval().to(device)
     datasets = {
         name: DATASET_BUILDERS[name].build()
         for name in dataset_names
     }
 
+    training_args = TrainingArguments(
+        per_device_eval_batch_size=args.batch_size,
+        dataloader_num_workers=args.num_workers,
+    )
+
     trainer = Trainer(
         model=model,
-        data_collator=default_data_collator
+        data_collator=default_data_collator,
+        args=training_args,
     )
 
     results = {}
@@ -69,7 +76,7 @@ def main(args: argparse.Namespace):
                         inputs,
                         model_output
                     )
-        
+
         results[dataset_name] = {
             name: metric.compute().tolist()
             for name, metric in metrics.items()

@@ -29,6 +29,8 @@ class RotatedKurtosis(Kurtosis):
                 torch.linalg.qr(torch.randn(activations.shape[-1], activations.shape[-1]))[0].to(activations.device)
                 for activations in model_output.layer_activations
             ]
-        for activation, rotation in zip(model_output.layer_activations, self.rotations):
-            activation @= rotation
+        model_output.layer_activations = [
+            activation @ rotation
+            for activation, rotation in zip(model_output.layer_activations, self.rotations)
+        ]
         super().update(batch, model_output)

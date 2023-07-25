@@ -1,0 +1,5 @@
+matplotlib
+numpy
+opencv-python
+tensorflow==1.14
+-r notebook.txt

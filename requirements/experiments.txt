@@ -7,3 +7,4 @@ torch
 torchvision
 transformers[torch]
 tqdm
+-r notebook.txt

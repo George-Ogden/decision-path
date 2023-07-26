@@ -16,6 +16,7 @@ from .base import VariableLengthClassifierOutput, VariableLengthModelForClassifi
 
 @VariableLengthModelForClassification.register("resnet")
 class VariableLengthResNetForImageClassification(VariableLengthModelForClassification):
+    # models and weights
     MODELS = {
         "resnet18": (resnet18, ResNet18_Weights),
         "resnet34": (resnet34, ResNet34_Weights),
@@ -52,16 +53,18 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
 
         for layer in self.torso:
             if layer[0].downsample:
+                # downsample the predictions at each layer
                 layer_predictions = [
                     layer[0].downsample(x)
                     for x in layer_predictions
                 ]
-            for sublayer in layer:
-                x = sublayer(x)
+            for block in layer:
+                x = block(x)
                 # convert to [B, N, H]
                 layer_outputs.append(x.mean(dim=(-1, -2)).unsqueeze(-2))
                 layer_predictions.append(x)
         layer_predictions = [
+            # make predictions for each layer
             self.head(x)
             for x in layer_predictions
         ]
@@ -83,6 +86,7 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
         return cls(model(weights="DEFAULT"), weights.DEFAULT.transforms())
     
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        # transform the images
         batch["pixel_values"] = [
             self.transform(image.convert("RGB")) for image in batch["image"]
         ]

@@ -7,6 +7,7 @@ import abc
 from ..registry import Registry
 
 class DatasetBuilder(abc.ABC, Registry):
+    """Abstract class for building datasets."""
     registry: Dict[str, DatasetBuilder] = {}
     
     @abc.abstractclassmethod

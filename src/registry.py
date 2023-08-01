@@ -3,6 +3,7 @@ from typing import Callable, Dict, Type, TypeVar
 T = TypeVar("T")
 
 class Registry:
+    """Registry helper for registering classes."""
     registry: Dict[str, T] = {}
     @classmethod
     def register(cls, key: str) -> Callable[[Type[T]], Type[T]]:

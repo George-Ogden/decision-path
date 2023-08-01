@@ -21,6 +21,7 @@ import os
 
 from .base import DatasetBuilder
 
+# modified from https://huggingface.co/datasets/imagenet-1k/tree/76bee66c09af2bb91a542af80fba86fc15832cb2
 _DATA_URL = "https://huggingface.co/datasets/imagenet-1k/resolve/1500f8c59b214ce459c0a593fa1c87993aeb7700/data/val_images.tar.gz"
 IMAGENET2012_CLASSES = OrderedDict(
     {
@@ -1029,6 +1030,9 @@ IMAGENET2012_CLASSES = OrderedDict(
 
 
 class ImageNet1kDatasetBuilder(datasets.GeneratorBasedBuilder):
+    """ImageNet1k validation dataset.
+    Modified from https://huggingface.co/datasets/imagenet-1k/blob/76bee66c09af2bb91a542af80fba86fc15832cb2/imagenet-1k.py.
+    """
     def _info(self):
         assert len(IMAGENET2012_CLASSES) == 1000
         return datasets.DatasetInfo(
@@ -1045,6 +1049,7 @@ class ImageNet1kDatasetBuilder(datasets.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         archive = dl_manager.download(_DATA_URL)
 
+        # only include validation set
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.VALIDATION,

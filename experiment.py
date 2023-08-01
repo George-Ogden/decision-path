@@ -30,7 +30,9 @@ def main(args: argparse.Namespace):
     dataset_names = args.datasets
     metric_names = args.metrics
     output_dir = args.output_dir
-  
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     model = VariableLengthModelForClassification.from_pretrained(model_name).eval().to(device)
     datasets = {
         name: DATASET_BUILDERS[name].build()
@@ -40,6 +42,7 @@ def main(args: argparse.Namespace):
     training_args = TrainingArguments(
         per_device_eval_batch_size=args.batch_size,
         dataloader_num_workers=args.num_workers,
+        output_dir=output_dir,
     )
 
     trainer = Trainer(
@@ -61,7 +64,7 @@ def main(args: argparse.Namespace):
             for name in required_parameters:
                 if name == "self":
                     continue
-                parameters[name] = args.__dict__[name]
+                parameters[name] = vars(args)[name]
             metrics[metric_name] = metric_type(**parameters)
         
         for batch in tqdm(dataloader):

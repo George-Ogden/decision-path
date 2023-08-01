@@ -11,6 +11,7 @@ from ..registry import Registry
 class Metric(abc.ABC, Registry):
     registry: Dict[str, Metric] = {}
     def __init__(self):
+        # initialize count and value
         self.count = 0.
         self.value = 0.
         

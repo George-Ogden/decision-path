@@ -7,10 +7,12 @@ from .base import Metric, VariableLengthClassifierOutput
 
 @Metric.register("rms")
 class RMS(Metric):
+    """RMS of activations."""
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         # L x [B, N, H]
         self.value += np.array(
             [
+                # stored mean of squares of all values
                 (activations ** 2).cpu().numpy().mean(axis=(-1, -2)).sum()
                 for activations in model_output.layer_activations
             ],

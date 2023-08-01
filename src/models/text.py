@@ -26,6 +26,7 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         ...
     
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> VariableLengthClassifierOutput:
+        # pass through model
         outputs: SequenceClassifierOutput = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -33,6 +34,7 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         )
         predictions = None
         if self.head is not None:
+            # make predictions if head is present
             predictions = [self.head(hidden_state) for hidden_state in outputs.hidden_states]
         return VariableLengthClassifierOutput(
             layer_activations=outputs.hidden_states,
@@ -41,15 +43,19 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
     
     @property
     def layers(self) -> List[Tuple[int, int]]:
+        # no blocks in these models
         return [
             (i, 0) for i in range(len(self.torso) + 1)
         ]
 
     @classmethod
     def _from_pretrained(cls, model_name: str) -> VariableLengthModelForSequenceClassification:
+        """Load a model from pretrained weights."""
+        # use the built-in HuggingFace functionality
         return cls(AutoModelForSequenceClassification.from_pretrained(model_name), AutoTokenizer.from_pretrained(model_name))
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        # tokenize the sentences
         sentence1_key, sentence2_key = "premise", "hypothesis"
         max_seq_length = 128
         return self.tokenizer(
@@ -91,6 +97,7 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
     def __init__(self, model: GPT2ForSequenceClassification, tokenizer: GPT2Tokenizer) -> None:
         super().__init__(model, tokenizer)
         if self.tokenizer.pad_token is None:
+            # GPT2 does not have a pad token
             tokenizer.pad_token = tokenizer.eos_token
             model.config.pad_token_id = model.config.eos_token_id
 

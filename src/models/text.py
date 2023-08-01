@@ -115,3 +115,44 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
     @property
     def head(self) -> Optional[nn.Module]:
         return None
+
+class RMSLayerNorm(nn.Module):
+    def __init__(self, normalized_shape, eps=1e-8, affine=True):
+        super(RMSLayerNorm, self).__init__()
+        self.normalized_shape = normalized_shape
+        self.eps = eps
+        self.affine = affine
+
+        if self.affine:
+            self.weight = nn.Parameter(torch.ones(()))
+        else:
+            self.register_parameter('weight', None)
+            self.register_parameter('bias', None)
+
+    def forward(self, x):
+        rms = torch.sqrt(torch.mean(x**2, dim=-1, keepdim=True) + self.eps)
+        x_normalized = x / rms
+        if self.affine:
+            x_normalized = x_normalized * self.weight
+        return x_normalized
+
+def replace(model):
+    for name, child in model.named_children():
+        if isinstance(child, nn.modules.normalization.LayerNorm):
+            setattr(model, name, RMSLayerNorm(child.normalized_shape, eps=child.eps, affine=True))
+        else:
+            replace(child)
+    return model
+
+
+class GPTR2ForSequenceClassification(GPT2ForSequenceClassification):
+    def __init__(self, config):
+        super().__init__(config)
+        replace(self)
+
+@VariableLengthModelForClassification.register("gptr2")
+class VariableLengthGPTR2ForSequenceClassification(VariableLengthGPT2ForSequenceClassification):
+    @classmethod
+    def _from_pretrained(cls, model_name: str) -> VariableLengthModelForSequenceClassification:
+        return cls(GPTR2ForSequenceClassification.from_pretrained(model_name), GPT2Tokenizer.from_pretrained(model_name))
+

@@ -1,5 +1,5 @@
 # Residual Stream Analysis
-This is a repository with code for ...  
+This is a repository with code for the experiments from https://go281.user.srcf.net/blog/residual/
 ## Visualisation
 To view visualisations, checkout out [this notebook](visualisation/notebook.ipynb). 
 ## Experiments

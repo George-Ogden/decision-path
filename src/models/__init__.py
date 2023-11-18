@@ -1,5 +1,4 @@
 from .base import VariableLengthModelForPrediction, VariableLengthClassifierOutput
 from .text import VariableLengthModelForPrediction
-from .image import VariableLengthResNetForImageClassification
 
 MODELS = VariableLengthModelForPrediction.registry

@@ -10,7 +10,7 @@ import os
 
 from typing import Dict
 
-from src.models import VariableLengthModelForClassification
+from src.models import VariableLengthModelForPrediction
 from src.metrics import METRICS, Metric
 from src.dataset import DATASET_BUILDERS
 
@@ -35,7 +35,7 @@ def main(args: argparse.Namespace):
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    model = VariableLengthModelForClassification.from_pretrained(model_name, revision=revision).eval().to(device)
+    model = VariableLengthModelForPrediction.from_pretrained(model_name, revision=revision).eval().to(device)
     datasets = {
         name: DATASET_BUILDERS[name].build()
         for name in dataset_names

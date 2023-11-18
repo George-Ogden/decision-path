@@ -9,9 +9,9 @@ import torch
 from transformers import PreTrainedModel, GPT2LMHeadModel, GPT2Tokenizer, GPTNeoXForCausalLM, GPTNeoXTokenizerFast, AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
+from .base import VariableLengthClassifierOutput, VariableLengthModelForPrediction
 
-class VariableLengthModelForSequenceClassification(VariableLengthModelForClassification):
+class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
     def __init__(self, model: AutoModelForCausalLM, tokenizer: AutoTokenizer):
         super().__init__()
         self.model = model
@@ -58,7 +58,7 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         ]
 
     @classmethod
-    def _from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForSequenceClassification:
+    def _from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForPrediction:
         """Load a model from pretrained weights."""
         # use the built-in HuggingFace functionality
         return cls(AutoModelForCausalLM.from_pretrained(model_name, **kwargs), AutoTokenizer.from_pretrained(model_name))
@@ -73,8 +73,8 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
             truncation=True,
         )
 
-@VariableLengthModelForClassification.register("gpt2")
-class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequenceClassification):
+@VariableLengthModelForPrediction.register("gpt2")
+class VariableLengthGPT2ForPrediction(VariableLengthModelForPrediction):
     def __init__(self, model: GPT2LMHeadModel, tokenizer: GPT2Tokenizer) -> None:
         super().__init__(model, tokenizer)
     
@@ -90,8 +90,8 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
     def head(self) -> Optional[nn.Module]:
         return self.model.lm_head
 
-@VariableLengthModelForClassification.register("pythia")
-class VariableLengthPythiaForSequenceClassification(VariableLengthModelForSequenceClassification):
+@VariableLengthModelForPrediction.register("pythia")
+class VariableLengthPythiaForPrediction(VariableLengthModelForPrediction):
     def __init__(self, model: GPTNeoXForCausalLM, tokenizer: GPTNeoXTokenizerFast) -> None:
         super().__init__(model, tokenizer)
     

@@ -17,8 +17,8 @@ class VariableLengthClassifierOutput(ModelOutput):
     predictions: Optional[torch.FloatTensor] = None
     loss: Optional[torch.FloatTensor] = None
 
-class VariableLengthModelForClassification(abc.ABC, nn.Module, Registry):
-    registry: Dict[str, Type[VariableLengthModelForClassification]] = {}
+class VariableLengthModelForPrediction(abc.ABC, nn.Module, Registry):
+    registry: Dict[str, Type[VariableLengthModelForPrediction]] = {}
     @abc.abstractmethod
     def forward(self, *args: Any, **kwargs: Any) -> VariableLengthClassifierOutput:
         """Pass through the model storing all activations and predictions."""
@@ -29,11 +29,11 @@ class VariableLengthModelForClassification(abc.ABC, nn.Module, Registry):
         """Returns a list of tuples of layer indices, where each tuple represents a layer and a block."""
 
     @abc.abstractclassmethod
-    def _from_pretrained(cls, model_name: str) -> VariableLengthModelForClassification:
+    def _from_pretrained(cls, model_name: str) -> VariableLengthModelForPrediction:
         ...
     
     @classmethod
-    def from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForClassification:
+    def from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForPrediction:
         # search the registry for the model class
         short_model_name = model_name.split("/")[-1]
         for key, model_class in cls.registry.items():

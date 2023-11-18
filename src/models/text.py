@@ -58,10 +58,10 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         ]
 
     @classmethod
-    def _from_pretrained(cls, model_name: str) -> VariableLengthModelForSequenceClassification:
+    def _from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForSequenceClassification:
         """Load a model from pretrained weights."""
         # use the built-in HuggingFace functionality
-        return cls(AutoModelForCausalLM.from_pretrained(model_name), AutoTokenizer.from_pretrained(model_name))
+        return cls(AutoModelForCausalLM.from_pretrained(model_name, **kwargs), AutoTokenizer.from_pretrained(model_name))
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         # tokenize the sentences

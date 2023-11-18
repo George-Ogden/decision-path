@@ -71,7 +71,7 @@ class VariableLengthResNetForImageClassification(VariableLengthModelForClassific
 
         return VariableLengthClassifierOutput(
             layer_activations=layer_outputs,
-            layer_predictions=layer_predictions,
+            predictions=layer_predictions,
         )
     
     @property

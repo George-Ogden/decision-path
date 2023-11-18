@@ -22,3 +22,17 @@ class MNLI_MMDatasetBuilder(RawMNLI):
     @classmethod
     def build(cls):
         return cls.raw_mnli()["validation_mismatched"]
+
+@DatasetBuilder.register("wikipedia")
+class WikipediaDatasetBuilder(DatasetBuilder):
+    """Load Wikipedia dataset."""
+    @classmethod
+    def build(cls):
+        return load_dataset("wikipedia", "20220301.simple")["train"]
+
+@DatasetBuilder.register("pile")
+class WikipediaDatasetBuilder(DatasetBuilder):
+    """Load Pile dataset."""
+    @classmethod
+    def build(cls):
+        return load_dataset("EleutherAI/pile")["validation"]

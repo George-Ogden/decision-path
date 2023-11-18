@@ -14,7 +14,8 @@ from ..registry import Registry
 class VariableLengthClassifierOutput(ModelOutput):
     """Storage for model output."""
     layer_activations: Optional[List[torch.FloatTensor]] = None
-    layer_predictions: Optional[torch.FloatTensor] = None
+    predictions: Optional[torch.FloatTensor] = None
+    loss: Optional[torch.FloatTensor] = None
 
 class VariableLengthModelForClassification(abc.ABC, nn.Module, Registry):
     registry: Dict[str, Type[VariableLengthModelForClassification]] = {}

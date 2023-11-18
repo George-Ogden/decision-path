@@ -16,12 +16,12 @@ from src.dataset import DATASET_BUILDERS
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", "-m", type=str, default="bert-base-cased")
-    parser.add_argument("--metrics", "-me", nargs="+", type=str, default=["outliers", "kurtosis", "rotated-kurtosis"])
-    parser.add_argument("--datasets", "-d", nargs="+", type=str, default=["mnli", "mnli-mm"])
+    parser.add_argument("--model_name", "-m", type=str, default="gpt2")
+    parser.add_argument("--metrics", "-me", nargs="+", type=str, default=["rms", "outliers"])
+    parser.add_argument("--datasets", "-d", nargs="+", type=str, default=["wikipedia"])
     parser.add_argument("--output-dir", "-o", type=str, default="results", help="Output directory for results")
-    parser.add_argument("--threshold", "-t", type=float, default=6.)
-    parser.add_argument("--batch_size", "-b", type=int, default=128)
+    parser.add_argument("--threshold", "-t", type=float, default=.5)
+    parser.add_argument("--batch_size", "-b", type=int, default=32)
     parser.add_argument("--num_workers", "-j", type=int, default=0)
     return parser.parse_args()
 
@@ -70,9 +70,7 @@ def main(args: argparse.Namespace):
         for batch in tqdm(dataloader):
             inputs = trainer._prepare_inputs(batch)
             with torch.no_grad():
-                labels = inputs.pop("labels")
                 model_output = model(**inputs)
-                inputs["labels"] = labels
                 inputs["batch_size"] = find_batch_size(batch)
                 for metric in metrics.values():
                     metric.update(

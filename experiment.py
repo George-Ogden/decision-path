@@ -89,7 +89,7 @@ def main(args: argparse.Namespace):
     model_name = model_name.split("/")[-1]
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    with open(f"{output_dir}/{model_name}.json", "w") as f:
+    with open(f"{output_dir}/{model_name}-{revision}.json", "w") as f:
         json.dump(results, f)
 
 if __name__ == "__main__":

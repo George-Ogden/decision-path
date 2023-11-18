@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import torch.nn as nn
 import torch
 
-from transformers import PreTrainedModel, GPT2LMHeadModel, GPT2Tokenizer, AutoModelForCausalLM, AutoTokenizer
+from transformers import PreTrainedModel, GPT2LMHeadModel, GPT2Tokenizer, GPTNeoXForCausalLM, GPTNeoXTokenizerFast, AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from .base import VariableLengthClassifierOutput, VariableLengthModelForClassification
@@ -16,6 +16,10 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         super().__init__()
         self.model = model
         self.tokenizer = tokenizer
+        if self.tokenizer.pad_token is None:
+            # some models do not have a pad token
+            tokenizer.pad_token = tokenizer.eos_token
+            model.config.pad_token_id = model.config.eos_token_id
     
     @abc.abstractproperty
     def tail(self) -> nn.Module:
@@ -73,10 +77,6 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
 class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequenceClassification):
     def __init__(self, model: GPT2LMHeadModel, tokenizer: GPT2Tokenizer) -> None:
         super().__init__(model, tokenizer)
-        if self.tokenizer.pad_token is None:
-            # GPT2 does not have a pad token
-            tokenizer.pad_token = tokenizer.eos_token
-            model.config.pad_token_id = model.config.eos_token_id
     
     @property
     def tail(self) -> nn.Module:
@@ -89,3 +89,20 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
     @property
     def head(self) -> Optional[nn.Module]:
         return self.model.lm_head
+
+@VariableLengthModelForClassification.register("pythia")
+class VariableLengthPythiaForSequenceClassification(VariableLengthModelForSequenceClassification):
+    def __init__(self, model: GPTNeoXForCausalLM, tokenizer: GPTNeoXTokenizerFast) -> None:
+        super().__init__(model, tokenizer)
+    
+    @property
+    def tail(self) -> nn.Module:
+        return self.model.gpt_neox.embed_in
+
+    @property
+    def torso(self) -> nn.Module:
+        return self.model.gpt_neox.layers
+
+    @property
+    def head(self) -> Optional[nn.Module]:
+        return self.model.embed_out

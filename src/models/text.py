@@ -16,13 +16,20 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
         super().__init__()
         self.model = model
         self.tokenizer = tokenizer
+    
+    @abc.abstractproperty
+    def tail(self) -> nn.Module:
+        """First part of network"""
+        ...
 
     @abc.abstractproperty
     def torso(self) -> nn.Module:
+        """Main part of network"""
         ...
     
     @abc.abstractproperty
     def head(self) -> Optional[nn.Module]:
+        """Last part of network"""
         ...
     
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, labels: Optional[torch.Tensor] = None) -> VariableLengthClassifierOutput:
@@ -70,6 +77,10 @@ class VariableLengthGPT2ForSequenceClassification(VariableLengthModelForSequence
             # GPT2 does not have a pad token
             tokenizer.pad_token = tokenizer.eos_token
             model.config.pad_token_id = model.config.eos_token_id
+    
+    @property
+    def tail(self) -> nn.Module:
+        return self.model.transformer.wte
 
     @property
     def torso(self) -> nn.Module:

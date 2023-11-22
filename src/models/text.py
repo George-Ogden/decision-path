@@ -56,11 +56,10 @@ class VariableLengthModelForSequenceClassification(VariableLengthModelForClassif
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         # tokenize the sentences
-        sentence1_key, sentence2_key = "premise", "hypothesis"
+        question = "question"
         max_seq_length = 128
         return self.tokenizer(
-            batch[sentence1_key],
-            batch[sentence2_key],
+            batch[question],
             padding="max_length",
             max_length=max_seq_length,
             truncation=True,

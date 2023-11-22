@@ -70,9 +70,12 @@ def main(args: argparse.Namespace):
         for batch in tqdm(dataloader):
             inputs = trainer._prepare_inputs(batch)
             with torch.no_grad():
-                labels = inputs.pop("labels")
+                labels = None
+                if "labels" in inputs:
+                    labels = inputs.pop("labels")
                 model_output = model(**inputs)
-                inputs["labels"] = labels
+                if labels is not None:
+                    inputs["labels"] = labels
                 inputs["batch_size"] = find_batch_size(batch)
                 for metric in metrics.values():
                     metric.update(

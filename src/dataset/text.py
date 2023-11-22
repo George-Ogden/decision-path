@@ -22,3 +22,10 @@ class MNLI_MMDatasetBuilder(RawMNLI):
     @classmethod
     def build(cls):
         return cls.raw_mnli()["validation_mismatched"]
+
+@DatasetBuilder.register("boolq")
+class BoolQDatasetBuilder(DatasetBuilder):
+    """Load BoolQ dataset."""
+    @classmethod
+    def build(cls):
+        return load_dataset("boolq")["validation"]

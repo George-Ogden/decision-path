@@ -11,18 +11,19 @@ import os
 
 from typing import Dict, List, Tuple, Union
 
-from src.models import VariableLengthModelForClassification
+from src.models import VariableLengthModelForPrediction
 from src.metrics import METRICS, Metric
 from src.dataset import DATASET_BUILDERS
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", "-m", type=str, default="bert-base-cased")
-    parser.add_argument("--metrics", "-me", nargs="+", type=str, default=["outliers", "kurtosis", "rotated-kurtosis"])
-    parser.add_argument("--datasets", "-d", nargs="+", type=str, default=["mnli", "mnli-mm"])
+    parser.add_argument("--model_name", "-m", type=str, default="EleutherAI/pythia-70m")
+    parser.add_argument("--revision", "-r", type=str, default="main")
+    parser.add_argument("--metrics", "-me", nargs="+", type=str, default=["rms", "outliers"])
+    parser.add_argument("--datasets", "-d", nargs="+", type=str, default=["wikipedia"])
     parser.add_argument("--output-dir", "-o", type=str, default="results", help="Output directory for results")
-    parser.add_argument("--threshold", "-t", type=float, default=6.)
-    parser.add_argument("--batch_size", "-b", type=int, default=128)
+    parser.add_argument("--threshold", "-t", type=float, default=.5)
+    parser.add_argument("--batch_size", "-b", type=int, default=32)
     parser.add_argument("--num_workers", "-j", type=int, default=0)
     return parser.parse_args()
 
@@ -31,10 +32,11 @@ def main(args: argparse.Namespace):
     dataset_names = args.datasets
     metric_names = args.metrics
     output_dir = args.output_dir
+    revision = args.revision
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    model = VariableLengthModelForClassification.from_pretrained(model_name).eval().to(device)
+    model = VariableLengthModelForPrediction.from_pretrained(model_name, revision=revision).eval().to(device)
     datasets = {
         name: DATASET_BUILDERS[name].build()
         for name in dataset_names

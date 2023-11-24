@@ -1,5 +1,4 @@
-from .base import VariableLengthModelForClassification, VariableLengthClassifierOutput
-from .text import VariableLengthModelForSequenceClassification
-from .image import VariableLengthResNetForImageClassification
+from .base import VariableLengthModelForPrediction, VariableLengthClassifierOutput
+from .text import VariableLengthModelForPrediction
 
-MODELS = VariableLengthModelForClassification.registry
+MODELS = VariableLengthModelForPrediction.registry

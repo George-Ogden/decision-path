@@ -1,6 +1,7 @@
 from transformers import Trainer, TrainingArguments, default_data_collator
 from transformers.trainer_pt_utils import find_batch_size
 from tqdm import tqdm
+import numpy as np
 import torch
 
 import argparse
@@ -8,7 +9,7 @@ import inspect
 import json
 import os
 
-from typing import Dict
+from typing import Dict, List, Tuple, Union
 
 from src.models import VariableLengthModelForClassification
 from src.metrics import METRICS, Metric
@@ -84,15 +85,27 @@ def main(args: argparse.Namespace):
                     )
 
         results[dataset_name] = {
-            name: metric.compute().tolist()
+            name: metric.compute()
             for name, metric in metrics.items()
         }
     results["layers"] = model.layers
 
+    def convert_to_pickle(json: Dict[str, Union[Dict, np.ndarray]], key: Tuple[str, ...] = ()):
+        for k, v in json.items():
+            if isinstance(v, dict):
+                convert_to_pickle(v, key + (k,))
+            elif isinstance(v, np.ndarray):
+                filename = os.path.join(output_dir, *key, k + ".npz")
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                np.savez_compressed(filename, v)
+                json[k] = filename
+
     model_name = model_name.split("/")[-1]
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    with open(f"{output_dir}/{model_name}.json", "w") as f:
+    output_dir = os.path.join(output_dir, model_name)
+    os.makedirs(output_dir, exist_ok=True)
+    convert_to_pickle(results)
+
+    with open(f"{output_dir}/metrics.json", "w") as f:
         json.dump(results, f)
 
 if __name__ == "__main__":

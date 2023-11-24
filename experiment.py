@@ -34,9 +34,8 @@ def main(args: argparse.Namespace):
     output_dir = args.output_dir
     revision = args.revision
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    model = VariableLengthModelForPrediction.from_pretrained(model_name, revision=revision).eval().to(device)
+    global model, training_args, trainer
+    model = VariableLengthModelForPrediction.from_pretrained(model_name, revision=revision)
     datasets = {
         name: DATASET_BUILDERS[name].build()
         for name in dataset_names
@@ -46,6 +45,7 @@ def main(args: argparse.Namespace):
         per_device_eval_batch_size=args.batch_size,
         dataloader_num_workers=args.num_workers,
         output_dir=output_dir,
+        do_eval=True,
     )
 
     trainer = Trainer(

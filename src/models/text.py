@@ -55,7 +55,7 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
     def _from_pretrained(cls, model_name: str, **kwargs: Any) -> VariableLengthModelForPrediction:
         """Load a model from pretrained weights."""
         # use the built-in HuggingFace functionality
-        return cls(AutoModelForCausalLM.from_pretrained(model_name, **kwargs), AutoTokenizer.from_pretrained(model_name))
+        return cls(AutoModelForCausalLM.from_pretrained(model_name, **kwargs, device_map="auto"), AutoTokenizer.from_pretrained(model_name))
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         # tokenize the sentences
@@ -67,6 +67,14 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
             max_length=max_seq_length,
             truncation=True,
         )
+
+    @property
+    def hf_device_map(self) -> Dict[str, torch.device]:
+        return {
+            f"model.{module}": device
+            for module, device in self.model.hf_device_map.items()
+        }
+
 
 @VariableLengthModelForPrediction.register("gpt2")
 class VariableLengthGPT2ForPrediction(VariableLengthModelForPrediction):
@@ -93,3 +101,17 @@ class VariableLengthPythiaForPrediction(VariableLengthModelForPrediction):
     @property
     def head(self) -> Optional[nn.Module]:
         return self.model.embed_out
+
+
+@VariableLengthModelForPrediction.register("llama-2")
+class VariableLengthLlama2ForPrediction(VariableLengthModelForPrediction):
+    def __init__(self, model: LlamaForCausalLM, tokenizer: LlamaTokenizerFast) -> None:
+        super().__init__(model, tokenizer)
+
+    @property
+    def torso(self) -> nn.Module:
+        return self.model.model.layers
+
+    @property
+    def head(self) -> Optional[nn.Module]:
+        return self.model.lm_head

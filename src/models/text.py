@@ -22,11 +22,6 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
             model.config.pad_token_id = model.config.eos_token_id
     
     @abc.abstractproperty
-    def tail(self) -> nn.Module:
-        """First part of network"""
-        ...
-
-    @abc.abstractproperty
     def torso(self) -> nn.Module:
         """Main part of network"""
         ...
@@ -47,7 +42,6 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
         return VariableLengthClassifierOutput(
             layer_activations=outputs.hidden_states,
             predictions=outputs.logits,
-            loss=outputs.loss,
         )
     
     @property
@@ -80,10 +74,6 @@ class VariableLengthGPT2ForPrediction(VariableLengthModelForPrediction):
         super().__init__(model, tokenizer)
     
     @property
-    def tail(self) -> nn.Module:
-        return self.model.transformer.wte
-
-    @property
     def torso(self) -> nn.Module:
         return self.model.transformer.h
 
@@ -96,10 +86,6 @@ class VariableLengthPythiaForPrediction(VariableLengthModelForPrediction):
     def __init__(self, model: GPTNeoXForCausalLM, tokenizer: GPTNeoXTokenizerFast) -> None:
         super().__init__(model, tokenizer)
     
-    @property
-    def tail(self) -> nn.Module:
-        return self.model.gpt_neox.embed_in
-
     @property
     def torso(self) -> nn.Module:
         return self.model.gpt_neox.layers

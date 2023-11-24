@@ -15,7 +15,6 @@ class VariableLengthClassifierOutput(ModelOutput):
     """Storage for model output."""
     layer_activations: Optional[List[torch.FloatTensor]] = None
     predictions: Optional[torch.FloatTensor] = None
-    loss: Optional[torch.FloatTensor] = None
 
 class VariableLengthModelForPrediction(abc.ABC, nn.Module, Registry):
     registry: Dict[str, Type[VariableLengthModelForPrediction]] = {}

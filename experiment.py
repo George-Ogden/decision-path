@@ -93,14 +93,18 @@ def main(args: argparse.Namespace):
     results["layers"] = model.layers
 
     def convert_to_pickle(json: Dict[str, Union[Dict, np.ndarray]], key: Tuple[str, ...] = ()):
+        to_store = {}
+        filename = os.path.join(output_dir, *key, "data.npz")
         for k, v in json.items():
             if isinstance(v, dict):
                 convert_to_pickle(v, key + (k,))
             elif isinstance(v, np.ndarray):
-                filename = os.path.join(output_dir, *key, k + ".npz")
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                np.savez_compressed(filename, v)
+                to_store[k] = v
                 json[k] = filename
+        if to_store:
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            np.savez_compressed(filename, **to_store)
+            json[k] = filename
 
     model_name = model_name.split("/")[-1]
     output_dir = os.path.join(output_dir, model_name)

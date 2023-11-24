@@ -29,4 +29,4 @@ class Path(Metric):
             # [NB, B, H] -> [N, H]
             np.concatenate(layer, axis=0)
             for layer in zip(*self.values)
-        ]).T
+        ]).transpose(1, 0, 2)

@@ -8,6 +8,7 @@ from .base import Metric, VariableLengthClassifierOutput
 
 @Metric.register("path")
 class Path(Metric):
+    """Path through residual stream."""
     def __init__(self):
         super().__init__()
         self.values = []

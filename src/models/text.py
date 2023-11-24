@@ -59,17 +59,13 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         # tokenize the sentences
-        question = "question"
-        answer = "answer"
         max_seq_length = 128
         return self.tokenizer(
-            batch[question],
+            batch["text"],
             padding="max_length",
             max_length=max_seq_length,
             truncation=True,
-        ) | {
-            "label": batch[answer]
-        }
+        )
 
     @property
     def hf_device_map(self) -> Dict[str, torch.device]:

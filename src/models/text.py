@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import torch.nn as nn
 import torch
 
-from transformers import PreTrainedModel, GPT2LMHeadModel, GPT2Tokenizer, GPTNeoXForCausalLM, GPTNeoXTokenizerFast, AutoModelForCausalLM, AutoTokenizer
+from transformers import PreTrainedModel, GPT2LMHeadModel, GPT2Tokenizer, GPTNeoXForCausalLM, GPTNeoXTokenizerFast, LlamaForCausalLM, LlamaTokenizerFast, AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from .base import VariableLengthClassifierOutput, VariableLengthModelForPrediction

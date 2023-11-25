@@ -91,9 +91,10 @@ def main(args: argparse.Namespace):
         }
     
     for token in ["yes", "no"]:
-        index = model.tokenizer.vocab[token]
+        # Space is important for correct tokenization.
+        index, = model.tokenizer.encode(" " + token)
         vector = model.head.weight[index]
-        results[token] = vector.detach().cpu().numpy()
+        results[token.strip()] = vector.detach().cpu().numpy()
     
     def convert_to_pickle(json: Dict[str, Union[Dict, np.ndarray]], key: Tuple[str, ...] = ()):
         to_store = {}

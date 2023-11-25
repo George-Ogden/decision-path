@@ -20,3 +20,4 @@ mnli/
 *.json
 *.txt
 *.pth
+*.npz

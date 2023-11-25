@@ -93,7 +93,7 @@ def main(args: argparse.Namespace):
     
     for token in ["yes", "no"]:
         # Space is important for correct tokenization.
-        index, = model.tokenizer.encode(" " + token)
+        index = model.tokenizer.encode(" " + token)[-1]
         vector = model.head.weight[index]
         results[token.strip()] = vector.detach().cpu().numpy()
     

@@ -34,7 +34,6 @@ def main(args: argparse.Namespace):
     output_dir = args.output_dir
     revision = args.revision
     
-    global model, training_args, trainer
     model = VariableLengthModelForPrediction.from_pretrained(model_name, revision=revision)
     datasets = {
         name: DATASET_BUILDERS[name].build()
@@ -90,8 +89,12 @@ def main(args: argparse.Namespace):
             name: metric.compute()
             for name, metric in metrics.items()
         }
-    results["layers"] = model.layers
-
+    
+    for token in ["yes", "no"]:
+        index = model.tokenizer.vocab[token]
+        vector = model.head.weight[index]
+        results[token] = vector.detach().cpu().numpy()
+    
     def convert_to_pickle(json: Dict[str, Union[Dict, np.ndarray]], key: Tuple[str, ...] = ()):
         to_store = {}
         filename = os.path.join(output_dir, *key, "data.npz")
@@ -111,7 +114,7 @@ def main(args: argparse.Namespace):
     os.makedirs(output_dir, exist_ok=True)
     convert_to_pickle(results)
 
-    with open(f"{output_dir}/metrics.json", "w") as f:
+    with open(os.path.join(output_dir, "metrics.json"), "w") as f:
         json.dump(results, f)
 
 if __name__ == "__main__":

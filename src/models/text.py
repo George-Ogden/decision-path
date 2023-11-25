@@ -59,7 +59,7 @@ class VariableLengthModelForPrediction(VariableLengthModelForPrediction):
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         # tokenize the sentences
-        max_seq_length = 128
+        max_seq_length = 1024
         return self.tokenizer(
             batch["text"],
             padding="max_length",

@@ -28,10 +28,10 @@ class BoolQDatasetBuilder(DatasetBuilder):
     """Load BoolQ dataset."""
     @classmethod
     def build(cls):
-        text = "Q: (yes/no) is the biggest ocean the pacific\nA: yes\nQ: (yes/no) can penguins fly\nA: no\nQ: (yes/no) {text}\nA:"
+        text = "{passage}\nQ: (yes/no) is the biggest ocean the pacific\nA: yes\nQ: (yes/no) can penguins fly\nA: no\nQ: (yes/no) {question}\nA:"
         return load_dataset("boolq")["validation"].map(
             lambda x: {
-                "text": text.format(text=x["question"]),
+                "text": text.format(**x),
                 "label": x["answer"]
             },
             batched=False

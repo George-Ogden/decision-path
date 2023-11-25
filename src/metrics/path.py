@@ -16,9 +16,13 @@ class Path(Metric):
     def update(self, batch: Dict[str, torch.Tensor], model_output: VariableLengthClassifierOutput):
         super().update(batch, model_output)
         # L x [B, N, H]
+        sequence_lengths = (torch.eq(batch["input_ids"], batch["pad_token_id"]).long().argmax(-1) - 1).to(
+            model_output.layer_activations[0].device
+        )
+
         self.values.append(
             [
-                activations[:,-1,:].detach().cpu().numpy()
+                activations[torch.arange(batch["batch_size"], device=activations.device),sequence_lengths,:].detach().cpu().numpy()
                 for activations in model_output.layer_activations
             ]
         )

@@ -79,6 +79,7 @@ def main(args: argparse.Namespace):
                 if labels is not None:
                     inputs["labels"] = labels
                 inputs["batch_size"] = find_batch_size(batch)
+                inputs["pad_token_id"] = model.tokenizer.pad_token_id
                 for metric in metrics.values():
                     metric.update(
                         inputs,

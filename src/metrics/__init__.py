@@ -1,7 +1,8 @@
 from .kurtosis import Kurtosis, RotatedKurtosis
 from .outliers import Outliers
-from .topk import Top1, Top5
+from .truth import Truth
 from .base import Metric
+from .path import Path
 from .rms import RMS
 
 METRICS = Metric.registry

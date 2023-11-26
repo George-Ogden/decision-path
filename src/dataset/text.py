@@ -9,16 +9,30 @@ class RawMNLI(DatasetBuilder):
     def raw_mnli(cls):
         return load_dataset("glue", "mnli")
 
-@DatasetBuilder.register("mnli")
-class MNLIDatasetBuilder(RawMNLI):
-    """Load MNLI dataset."""
+@DatasetBuilder.register("wikipedia")
+class WikipediaDatasetBuilder(DatasetBuilder):
+    """Load Wikipedia dataset."""
     @classmethod
     def build(cls):
-        return cls.raw_mnli()["validation_matched"]
+        return load_dataset("wikipedia", "20220301.simple")["train"]
 
-@DatasetBuilder.register("mnli-mm")
-class MNLI_MMDatasetBuilder(RawMNLI):
-    """Load MNLI mismatched dataset."""
+@DatasetBuilder.register("pile")
+class WikipediaDatasetBuilder(DatasetBuilder):
+    """Load Pile dataset."""
     @classmethod
     def build(cls):
-        return cls.raw_mnli()["validation_mismatched"]
+        return load_dataset("EleutherAI/pile")["validation"]
+
+@DatasetBuilder.register("boolq")
+class BoolQDatasetBuilder(DatasetBuilder):
+    """Load BoolQ dataset."""
+    @classmethod
+    def build(cls):
+        text = "{passage}\nQ: (yes/no) is the biggest ocean the pacific\nA: yes\nQ: (yes/no) can penguins fly\nA: no\nQ: (yes/no) {question}\nA:"
+        return load_dataset("boolq")["validation"].map(
+            lambda x: {
+                "text": text.format(**x),
+                "label": x["answer"]
+            },
+            batched=False
+        )

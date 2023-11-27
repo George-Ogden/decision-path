@@ -17,7 +17,7 @@ class WikipediaDatasetBuilder(DatasetBuilder):
         return load_dataset("wikipedia", "20220301.simple")["train"]
 
 @DatasetBuilder.register("pile")
-class WikipediaDatasetBuilder(DatasetBuilder):
+class PileDatasetBuilder(DatasetBuilder):
     """Load Pile dataset."""
     @classmethod
     def build(cls):
